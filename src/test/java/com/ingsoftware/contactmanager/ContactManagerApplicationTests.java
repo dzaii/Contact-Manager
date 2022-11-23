@@ -1,4 +1,4 @@
-package com.ingsoftware.contactmanager.contactmanager;
+package com.ingsoftware.contactmanager;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
