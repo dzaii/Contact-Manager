@@ -1,5 +1,6 @@
 package com.ingsoftware.contactmanager.services;
 
+import com.ingsoftware.contactmanager.models.ContactType;
 import com.ingsoftware.contactmanager.models.User;
 import com.ingsoftware.contactmanager.repositories.UserRepository;
 import lombok.Data;

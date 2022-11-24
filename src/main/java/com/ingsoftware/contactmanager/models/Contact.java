@@ -1,6 +1,5 @@
 package com.ingsoftware.contactmanager.models;
 
-import com.ingsoftware.contactmanager.models.enums.ContactType;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -16,8 +15,8 @@ import java.time.LocalDateTime;
 public class Contact {
 
     @Id
-    @Column(name = "contact_id")
-    @GeneratedValue(generator = "contacts_contact_id_seq")
+    @Column(name = "id")
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int id;
     @Column(name = "first_name")
     private String firstName;
@@ -32,9 +31,10 @@ public class Contact {
     @Column(name = "modified_at")
     private LocalDateTime modifiedAt;
     @Enumerated(value = EnumType.ORDINAL)
-    @Column(name = "type_id")
+    @ManyToOne
+    @JoinColumn(name = "type_id", referencedColumnName = "id")
     private ContactType contactType;
     @ManyToOne
-    @JoinColumn(name="user_id")
+    @JoinColumn(name = "user_id", referencedColumnName = "id")
     private User user;
 }
