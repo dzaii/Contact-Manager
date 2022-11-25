@@ -1,6 +1,8 @@
 package com.ingsoftware.contactmanager.models;
 
 import lombok.Data;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 
 import javax.persistence.*;
 import java.time.LocalDateTime;
@@ -17,8 +19,12 @@ public class ContactType {
 
     @Column(name = "type_value")
     private String value;
+
+    @CreationTimestamp
     @Column(name = "created_at")
     private LocalDateTime createdAt;
+
+    @UpdateTimestamp
     @Column(name = "modified_at")
     private LocalDateTime modifiedAt;
 }

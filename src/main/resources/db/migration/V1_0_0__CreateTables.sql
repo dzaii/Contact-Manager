@@ -4,8 +4,8 @@ CREATE TABLE users (
 	first_name    varchar (20),
 	last_name     varchar (20),
 	email         varchar (50) UNIQUE,
-	user_password varchar (50),
-	user_role     varchar (10),
+	password      varchar (50),
+	role          varchar (10),
 	created_at    timestamp,
 	modified_at   timestamp
 );
