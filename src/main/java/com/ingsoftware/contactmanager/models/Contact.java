@@ -1,5 +1,7 @@
 package com.ingsoftware.contactmanager.models;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -33,6 +35,12 @@ public class Contact {
     @Column(name = "phone_number")
     private String phoneNumber;
 
+    @Column(name = "address")
+    private String address;
+
+    @Column(name = "info")
+    private String info;
+
     @CreationTimestamp
     @Column(name = "created_at")
     private LocalDateTime createdAt;
@@ -45,7 +53,9 @@ public class Contact {
     @JoinColumn(name = "type_id", referencedColumnName = "id")
     private ContactType contactType;
 
+
     @ManyToOne
     @JoinColumn(name = "user_id", referencedColumnName = "id")
+    @JsonIgnore
     private User user;
 }

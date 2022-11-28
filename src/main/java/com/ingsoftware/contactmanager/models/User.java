@@ -1,22 +1,24 @@
 package com.ingsoftware.contactmanager.models;
 
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.ingsoftware.contactmanager.models.enums.UserRole;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.UpdateTimestamp;
+import org.hibernate.annotations.*;
 
 import javax.persistence.*;
+import javax.persistence.Entity;
+import javax.persistence.Table;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 @Data
 @Entity
 @Table(name = "users")
-@NoArgsConstructor
-@AllArgsConstructor
 public class User {
 
     @Id
@@ -49,6 +51,10 @@ public class User {
     private LocalDateTime modifiedAt;
 
     @OneToMany(mappedBy="user")
-    private List<Contact> contactList;
+    private List<Contact> contactList = new ArrayList<>();
+
+    @Generated(GenerationTime.INSERT)
+    @Column(name = "guid")
+    private UUID guid;
 
 }
