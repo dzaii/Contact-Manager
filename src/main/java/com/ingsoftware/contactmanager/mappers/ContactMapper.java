@@ -3,11 +3,9 @@ package com.ingsoftware.contactmanager.mappers;
 import com.ingsoftware.contactmanager.dtos.ContactRequestDto;
 import com.ingsoftware.contactmanager.dtos.ContactResponseDto;
 import com.ingsoftware.contactmanager.models.Contact;
-import org.mapstruct.AfterMapping;
-import org.mapstruct.Mapper;
-import org.mapstruct.Mapping;
-import org.mapstruct.MappingTarget;
+import org.mapstruct.*;
 
+import javax.management.InvalidAttributeValueException;
 import java.util.List;
 
 @Mapper

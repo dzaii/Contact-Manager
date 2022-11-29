@@ -2,6 +2,8 @@ package com.ingsoftware.contactmanager.dtos;
 
 import lombok.Data;
 
+import javax.validation.constraints.AssertTrue;
+
 @Data
 public class ContactRequestDto {
 
@@ -18,4 +20,10 @@ public class ContactRequestDto {
     private String type;
 
     private String info;
+
+    @AssertTrue(message = "One must be present.")
+    private boolean isValid() {
+        return firstName != null || lastName != null ||
+                email != null || phoneNumber != null;
+    }
 }

@@ -10,6 +10,7 @@ import com.ingsoftware.contactmanager.repositories.ContactRepository;
 import com.ingsoftware.contactmanager.repositories.UserRepository;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.management.InstanceNotFoundException;
 import java.util.List;
@@ -17,6 +18,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 @Service
+@Transactional
 @AllArgsConstructor
 public class ContactService {
 
@@ -26,24 +28,25 @@ public class ContactService {
     private UserRepository userRepository;
 
 
-    public List<ContactResponseDto> getAll(){
+    public List<ContactResponseDto> getAll() {
         return contactMapper.entityToResponse(contactRepository.findAll());
     }
 
     public List<ContactResponseDto> getAllByUserGuid(UUID userGuid) throws InstanceNotFoundException {
         Optional<User> userOptional = userRepository.findByGuid(userGuid);
 
-        if(userOptional.isPresent()){
+        if (userOptional.isPresent()) {
             User user = userOptional.get();
             return contactMapper.entityToResponse(contactRepository.findByUser(user));
         }
         throw new InstanceNotFoundException("Invalid guid.");
     }
 
-    public ContactResponseDto create(UUID userGuid, ContactRequestDto contactRequestDto) throws InstanceNotFoundException {
+    public ContactResponseDto create(UUID userGuid, ContactRequestDto contactRequestDto)
+            throws InstanceNotFoundException {
         Optional<User> userOptional = userRepository.findByGuid(userGuid);
 
-        if(userOptional.isPresent()){
+        if (userOptional.isPresent()) {
             User user = userOptional.get();
             Contact contact = contactMapper.requestToEntity(contactRequestDto);
             contact.setUser(user);
@@ -56,11 +59,11 @@ public class ContactService {
         Optional<User> userOptional = userRepository.findByGuid(userGuid);
         Optional<Contact> contactOptional = contactRepository.findByGuid(contactGuid);
 
-        if(userOptional.isPresent() && contactOptional.isPresent()){
+        if (userOptional.isPresent() && contactOptional.isPresent()) {
             User user = userOptional.get();
             Contact contact = contactOptional.get();
 
-            if(user.getId() == contact.getUser().getId()){
+            if (user.getId() == contact.getUser().getId()) {
                 contactRepository.delete(contact);
                 return "Deleted contact.";
             }
@@ -69,15 +72,16 @@ public class ContactService {
         throw new InstanceNotFoundException("Invalid user/contact guid.");
     }
 
-    public ContactResponseDto editContact(UUID userGuid, UUID contactGuid, ContactRequestDto contactRequestDto) throws InstanceNotFoundException {
+    public ContactResponseDto editContact(UUID userGuid, UUID contactGuid, ContactRequestDto contactRequestDto)
+            throws InstanceNotFoundException {
         Optional<User> userOptional = userRepository.findByGuid(userGuid);
         Optional<Contact> contactOptional = contactRepository.findByGuid(contactGuid);
 
-        if(userOptional.isPresent() && contactOptional.isPresent()){
+        if (userOptional.isPresent() && contactOptional.isPresent()) {
             User user = userOptional.get();
             Contact contact = contactOptional.get();
 
-            if(user.getId() == contact.getUser().getId()){
+            if (user.getId() == contact.getUser().getId()) {
                 contact.setFirstName(contactRequestDto.getFirstName());
                 contact.setLastName(contactRequestDto.getLastName());
                 contact.setEmail(contactRequestDto.getEmail());
