@@ -14,7 +14,8 @@ ALTER TABLE contacts ADD CONSTRAINT at_least_one_present
 
 ALTER TABLE contacts
 ADD COLUMN address varchar(100),
-ADD COLUMN info    varchar(100);
+ADD COLUMN info    varchar(100),
+ADD COLUMN guid uuid UNIQUE NOT NULL DEFAULT gen_random_uuid ();
 
 ALTER TABLE users
 ADD COLUMN guid uuid UNIQUE NOT NULL DEFAULT gen_random_uuid ();

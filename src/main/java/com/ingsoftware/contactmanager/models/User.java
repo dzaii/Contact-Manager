@@ -1,11 +1,8 @@
 package com.ingsoftware.contactmanager.models;
 
-import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.ingsoftware.contactmanager.models.enums.UserRole;
 
-import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.NoArgsConstructor;
 import org.hibernate.annotations.*;
 
 import javax.persistence.*;

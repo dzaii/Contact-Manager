@@ -5,8 +5,9 @@ import lombok.Data;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
+
 @Data
-public class UserResponseDto {
+public class ContactResponseDto {
 
     private UUID guid;
 
@@ -16,9 +17,15 @@ public class UserResponseDto {
 
     private String email;
 
+    private String phoneNumber;
+
+    private String address;
+
+    private String type;
+
+    private String info;
+
     private LocalDateTime createdAt;
 
     private LocalDateTime modifiedAt;
-
-
 }
