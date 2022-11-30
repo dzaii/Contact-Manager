@@ -5,6 +5,7 @@ import com.ingsoftware.contactmanager.services.ContactService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.CurrentSecurityContext;
 import org.springframework.web.bind.annotation.*;
 
 import javax.management.InstanceNotFoundException;
@@ -26,33 +27,37 @@ public class ContactController {
         return ResponseEntity.status(HttpStatus.OK).body(contactService.getAll());
     }
 
-    @GetMapping("/users/{userGuid}/contacts")
-    public ResponseEntity<?> getAllUserContacts(@PathVariable("userGuid") UUID userGuid)
+    @GetMapping("/users/contacts")
+    public ResponseEntity<?> getAllUserContacts(@CurrentSecurityContext(expression="authentication.name")
+                                                    String email)
             throws InstanceNotFoundException {
-        return ResponseEntity.status(HttpStatus.OK).body(contactService.getAllByUserGuid(userGuid));
+        return ResponseEntity.status(HttpStatus.OK).body(contactService.getAllByUser(email));
     }
 
-    @PostMapping("/users/{userGuid}/contacts")
-    public ResponseEntity<?> createContact(@PathVariable("userGuid") UUID userGuid,
+    @PostMapping("/users/contacts")
+    public ResponseEntity<?> createContact(@CurrentSecurityContext(expression="authentication.name")
+                                               String email,
                                            @RequestBody @Valid ContactRequestDto contactRequestDto)
             throws InstanceNotFoundException {
-        return ResponseEntity.status(HttpStatus.OK).body(contactService.create(userGuid, contactRequestDto));
+        return ResponseEntity.status(HttpStatus.OK).body(contactService.create(email, contactRequestDto));
     }
 
-    @DeleteMapping("/users/{userGuid}/contacts/{contactGuid}")
-    public ResponseEntity<?> deleteContact(@PathVariable("userGuid") UUID userGuid,
+    @DeleteMapping("/users/contacts/{contactGuid}")
+    public ResponseEntity<?> deleteContact(@CurrentSecurityContext(expression="authentication.name")
+                                               String email,
                                            @PathVariable("contactGuid") UUID contactGuid)
             throws InstanceNotFoundException {
-        return ResponseEntity.status(HttpStatus.OK).body(contactService.delete(userGuid, contactGuid));
+        return ResponseEntity.status(HttpStatus.OK).body(contactService.delete(email, contactGuid));
     }
 
-    @PutMapping("/users/{userGuid}/contacts/{contactGuid}")
-    public ResponseEntity<?> editContact(@PathVariable("userGuid") UUID userGuid,
+    @PutMapping("/users/contacts/{contactGuid}")
+    public ResponseEntity<?> editContact(@CurrentSecurityContext(expression="authentication.name")
+                                             String email,
                                          @PathVariable("contactGuid") UUID contactGuid,
                                          @RequestBody ContactRequestDto contactRequestDto)
             throws InstanceNotFoundException {
         return ResponseEntity.status(HttpStatus.OK)
-                .body(contactService.editContact(userGuid, contactGuid, contactRequestDto));
+                .body(contactService.editContact(email, contactGuid, contactRequestDto));
     }
 
 }

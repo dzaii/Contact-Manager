@@ -8,6 +8,7 @@ import com.ingsoftware.contactmanager.repositories.UserRepository;
 import lombok.AllArgsConstructor;
 
 import org.springframework.dao.DuplicateKeyException;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -23,6 +24,8 @@ public class UserService {
 
     private UserRepository userRepository;
     private UserMapper userMapper;
+
+    private PasswordEncoder passwordEncoder;
 
     public List<UserResponseDto> getAll() {
         return userMapper.entityToResponseDto(userRepository.findAll());
@@ -41,13 +44,17 @@ public class UserService {
         if (userRepository.existsUserByEmail(userRequestDto.getEmail()))
             throw new DuplicateKeyException("Email already exists.");
 
-        return userMapper.entityToResponseDto((userRepository.save(userMapper.requestDtoToEntity(userRequestDto))));
+        User user = userMapper.requestDtoToEntity(userRequestDto);
+        user.setPassword(passwordEncoder.encode(user.getPassword()));
+
+        return userMapper.entityToResponseDto(userRepository.save(user));
     }
 
-    public void deleteUser(UUID guid) throws InstanceNotFoundException {
+    public String deleteUser(UUID guid) throws InstanceNotFoundException {
 
         if (userRepository.deleteByGuid(guid) == 0)
-            throw new InstanceNotFoundException("Invalid guid.");
+            throw new InstanceNotFoundException("User not found.");
+        return "User deleted.";
     }
 
     public UserResponseDto editUser(UserRequestDto userRequestDto, UUID guid) throws InstanceNotFoundException {

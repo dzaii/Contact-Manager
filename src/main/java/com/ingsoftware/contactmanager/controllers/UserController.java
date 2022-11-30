@@ -31,8 +31,7 @@ import java.util.UUID;
 
     @DeleteMapping("/{guid}") public ResponseEntity<?> deleteUser(@PathVariable("guid") UUID guid)
             throws InstanceNotFoundException {
-        userService.deleteUser(guid);
-        return ResponseEntity.status(HttpStatus.OK).body("Deleted user.");
+        return ResponseEntity.status(HttpStatus.OK).body(userService.deleteUser(guid));
     }
 
     @GetMapping("/{guid}") public ResponseEntity<?> getUser(@PathVariable("guid") UUID guid)

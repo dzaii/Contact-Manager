@@ -4,7 +4,7 @@ CREATE TABLE users (
 	first_name    varchar (20),
 	last_name     varchar (20),
 	email         varchar (50) UNIQUE,
-	password      varchar (50),
+	password      varchar (255),
 	role          varchar (10),
 	created_at    timestamp,
 	modified_at   timestamp

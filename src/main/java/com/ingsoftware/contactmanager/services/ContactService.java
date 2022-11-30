@@ -32,35 +32,29 @@ public class ContactService {
         return contactMapper.entityToResponse(contactRepository.findAll());
     }
 
-    public List<ContactResponseDto> getAllByUserGuid(UUID userGuid) throws InstanceNotFoundException {
-        Optional<User> userOptional = userRepository.findByGuid(userGuid);
+    public List<ContactResponseDto> getAllByUser(String email){
 
-        if (userOptional.isPresent()) {
-            User user = userOptional.get();
-            return contactMapper.entityToResponse(contactRepository.findByUser(user));
-        }
-        throw new InstanceNotFoundException("Invalid guid.");
+        User user = userRepository.findByEmail(email).get();
+
+        return contactMapper.entityToResponse(contactRepository.findByUser(user));
     }
 
-    public ContactResponseDto create(UUID userGuid, ContactRequestDto contactRequestDto)
-            throws InstanceNotFoundException {
-        Optional<User> userOptional = userRepository.findByGuid(userGuid);
+    public ContactResponseDto create(String email, ContactRequestDto contactRequestDto){
 
-        if (userOptional.isPresent()) {
-            User user = userOptional.get();
-            Contact contact = contactMapper.requestToEntity(contactRequestDto);
-            contact.setUser(user);
-            return contactMapper.entityToResponse(contactRepository.save(contact));
-        }
-        throw new InstanceNotFoundException("Invalid guid.");
+        User user = userRepository.findByEmail(email).get();
+        Contact contact = contactMapper.requestToEntity(contactRequestDto);
+        contact.setUser(user);
+
+        return contactMapper.entityToResponse(contactRepository.save(contact));
+
+
     }
 
-    public String delete(UUID userGuid, UUID contactGuid) throws InstanceNotFoundException {
-        Optional<User> userOptional = userRepository.findByGuid(userGuid);
+    public String delete(String email, UUID contactGuid) throws InstanceNotFoundException {
+        User user = userRepository.findByEmail(email).get();
         Optional<Contact> contactOptional = contactRepository.findByGuid(contactGuid);
 
-        if (userOptional.isPresent() && contactOptional.isPresent()) {
-            User user = userOptional.get();
+        if (contactOptional.isPresent()) {
             Contact contact = contactOptional.get();
 
             if (user.getId() == contact.getUser().getId()) {
@@ -69,16 +63,16 @@ public class ContactService {
             }
 
         }
-        throw new InstanceNotFoundException("Invalid user/contact guid.");
+        throw new InstanceNotFoundException("Contact not found.");
     }
 
-    public ContactResponseDto editContact(UUID userGuid, UUID contactGuid, ContactRequestDto contactRequestDto)
+    public ContactResponseDto editContact(String email, UUID contactGuid, ContactRequestDto contactRequestDto)
             throws InstanceNotFoundException {
-        Optional<User> userOptional = userRepository.findByGuid(userGuid);
+        User user = userRepository.findByEmail(email).get();
         Optional<Contact> contactOptional = contactRepository.findByGuid(contactGuid);
 
-        if (userOptional.isPresent() && contactOptional.isPresent()) {
-            User user = userOptional.get();
+        if (contactOptional.isPresent()) {
+
             Contact contact = contactOptional.get();
 
             if (user.getId() == contact.getUser().getId()) {
@@ -94,7 +88,7 @@ public class ContactService {
             }
 
         }
-        throw new InstanceNotFoundException("Invalid user/contact guid.");
+        throw new InstanceNotFoundException("Contact not found.");
     }
 
 }

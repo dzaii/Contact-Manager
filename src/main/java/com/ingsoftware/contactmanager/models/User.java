@@ -6,6 +6,7 @@ import lombok.Data;
 import org.hibernate.annotations.*;
 
 import javax.persistence.*;
+import javax.persistence.CascadeType;
 import javax.persistence.Entity;
 import javax.persistence.Table;
 import java.time.LocalDateTime;
@@ -47,7 +48,7 @@ public class User {
     @Column(name = "modified_at")
     private LocalDateTime modifiedAt;
 
-    @OneToMany(mappedBy="user")
+    @OneToMany(mappedBy="user", cascade = CascadeType.ALL)
     private List<Contact> contactList = new ArrayList<>();
 
     @Generated(GenerationTime.INSERT)
