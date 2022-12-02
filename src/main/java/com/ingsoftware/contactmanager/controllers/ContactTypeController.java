@@ -7,10 +7,15 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import javax.management.InstanceNotFoundException;
+import javax.naming.directory.AttributeInUseException;
+import javax.persistence.EntityNotFoundException;
 import javax.validation.Valid;
+import java.util.UUID;
 
-@RestController @RequestMapping("contacts/types") @AllArgsConstructor public class ContactTypeController {
+@RestController
+@RequestMapping("contacts/types")
+@AllArgsConstructor
+public class ContactTypeController {
 
     ContactTypeService contactTypeService;
 
@@ -19,13 +24,20 @@ import javax.validation.Valid;
     }
 
     @PostMapping()
-    public ResponseEntity<?> createOrUpdate(@RequestBody @Valid ContactTypeRequestDto contactTypeRequestDto) {
-        return ResponseEntity.status(HttpStatus.OK).body(contactTypeService.createOrUpdate(contactTypeRequestDto));
+    public ResponseEntity<?> create(@RequestBody @Valid ContactTypeRequestDto contactTypeRequestDto) {
+        return ResponseEntity.status(HttpStatus.OK).body(contactTypeService.create(contactTypeRequestDto));
     }
 
-    @DeleteMapping("/{id}") public ResponseEntity<?> delete(@PathVariable("id") int id)
-            throws InstanceNotFoundException {
-        return ResponseEntity.status(HttpStatus.OK).body(contactTypeService.delete(id));
+    @DeleteMapping("/{guid}") public ResponseEntity<?> delete(@PathVariable("guid") UUID guid)
+            throws EntityNotFoundException, AttributeInUseException {
+        contactTypeService.delete(guid);
+        return ResponseEntity.status(HttpStatus.OK).body("Deleted.");
+    }
+
+    @PutMapping("/{guid}") public ResponseEntity<?> edit(@RequestBody @Valid ContactTypeRequestDto contactTypeRequestDto,
+                                                         @PathVariable("guid") UUID guid)
+            throws EntityNotFoundException{
+        return ResponseEntity.status(HttpStatus.OK).body(contactTypeService.edit(contactTypeRequestDto,guid));
     }
 
 }

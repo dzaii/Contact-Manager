@@ -12,66 +12,66 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import javax.management.InstanceNotFoundException;
+import javax.persistence.EntityNotFoundException;
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 
 @Service
-@Transactional
 @AllArgsConstructor
 public class UserService {
 
     private UserRepository userRepository;
     private UserMapper userMapper;
-
     private PasswordEncoder passwordEncoder;
 
+    @Transactional(readOnly = true)
     public List<UserResponseDto> getAll() {
         return userMapper.entityToResponseDto(userRepository.findAll());
     }
 
-    public UserResponseDto getByGuid(UUID guid) throws InstanceNotFoundException {
-        Optional<User> user = userRepository.findByGuid(guid);
-        if (user.isPresent())
-            return userMapper.entityToResponseDto(user.get());
-        else
-            throw new InstanceNotFoundException("Invalid guid.");
+    @Transactional(readOnly = true)
+    public UserResponseDto getByGuid(UUID guid) throws EntityNotFoundException {
+        return userMapper.entityToResponseDto(findByGuid(guid));
     }
 
-    public UserResponseDto registerUser(UserRequestDto userRequestDto) {
+    @Transactional(rollbackFor = Exception.class)
+    public UserResponseDto create(UserRequestDto userRequestDto) {
 
-        if (userRepository.existsUserByEmail(userRequestDto.getEmail()))
+        if (userRepository.existsUserByEmail(userRequestDto.getEmail())) {
             throw new DuplicateKeyException("Email already exists.");
+        }
 
         User user = userMapper.requestDtoToEntity(userRequestDto);
         user.setPassword(passwordEncoder.encode(user.getPassword()));
-
         return userMapper.entityToResponseDto(userRepository.save(user));
     }
 
-    public String deleteUser(UUID guid) throws InstanceNotFoundException {
+    @Transactional(rollbackFor = Exception.class)
+    public void delete(UUID guid) throws EntityNotFoundException {
 
-        if (userRepository.deleteByGuid(guid) == 0)
-            throw new InstanceNotFoundException("User not found.");
-        return "User deleted.";
+        if (userRepository.deleteByGuid(guid) == 0) {
+            throw new EntityNotFoundException("User not found.");
+        }
     }
 
-    public UserResponseDto editUser(UserRequestDto userRequestDto, UUID guid) throws InstanceNotFoundException {
+    @Transactional(rollbackFor = Exception.class)
+    public UserResponseDto edit(UserRequestDto userRequestDto, UUID guid)
+            throws EntityNotFoundException, DuplicateKeyException {
 
-        Optional<User> userOpt = userRepository.findByGuid(guid);
+        User user = findByGuid(guid);
 
-        if (userOpt.isPresent()) {
+        if (user.getEmail().equals(userRequestDto.getEmail())
+                || !userRepository.existsUserByEmail(userRequestDto.getEmail())) {
 
-            User user = userOpt.get();
+            return userMapper.entityToResponseDto(userRepository.save(
+                    userMapper.updateEntityFromRequest(user, userRequestDto)));
+        }
+        throw new DuplicateKeyException("Email already exist.");
+    }
 
-            user.setEmail(userRequestDto.getEmail());
-            user.setFirstName(userRequestDto.getFirstName());
-            user.setLastName(userRequestDto.getLastName());
-            user.setPassword(userRequestDto.getPassword());
 
-            return userMapper.entityToResponseDto(userRepository.save(user));
-        } else
-            throw new InstanceNotFoundException("Invalid guid.");
+    private User findByGuid(UUID guid) throws EntityNotFoundException {
+        return userRepository.findByGuid(guid)
+                .orElseThrow(() -> new EntityNotFoundException("User not found."));
     }
 }

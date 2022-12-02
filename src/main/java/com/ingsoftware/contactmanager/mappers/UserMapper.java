@@ -12,7 +12,6 @@ import java.util.List;
 @Mapper
 public abstract class UserMapper {
 
-
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "role", ignore = true)
     @Mapping(target = "createdAt", ignore = true)
@@ -21,9 +20,17 @@ public abstract class UserMapper {
     @Mapping(target = "guid", ignore = true)
     public abstract User requestDtoToEntity(UserRequestDto userRequestDto);
 
+    @Mapping(target = "id", ignore = true)
+    @Mapping(target = "role", ignore = true)
+    @Mapping(target = "createdAt", ignore = true)
+    @Mapping(target = "modifiedAt", ignore = true)
+    @Mapping(target = "contactList", ignore = true)
+    @Mapping(target = "guid", ignore = true)
+    public abstract User updateEntityFromRequest(@MappingTarget User user, UserRequestDto userRequestDto);
+
     @AfterMapping
-    protected void addRoleToUser(@MappingTarget User user){
-        user.setRole(UserRole.USER);
+    protected void addRoleToUser(@MappingTarget User user, UserRequestDto userRequestDto){
+        user.setRole(UserRole.valueOf(userRequestDto.getRole().toUpperCase()));
     }
 
     public abstract UserResponseDto entityToResponseDto(User user);

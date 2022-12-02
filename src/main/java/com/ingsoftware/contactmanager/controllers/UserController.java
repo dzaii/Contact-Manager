@@ -3,45 +3,53 @@ package com.ingsoftware.contactmanager.controllers;
 import com.ingsoftware.contactmanager.dtos.UserRequestDto;
 import com.ingsoftware.contactmanager.dtos.UserResponseDto;
 import com.ingsoftware.contactmanager.services.UserService;
+import lombok.AllArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import javax.management.InstanceNotFoundException;
+import javax.persistence.EntityNotFoundException;
 import javax.validation.Valid;
 import java.util.UUID;
 
-@RestController @RequestMapping("/users") public class UserController {
+@RestController
+@RequestMapping("/users")
+@AllArgsConstructor
+public class UserController {
+
     private final UserService userService;
 
-    @Autowired UserController(UserService userService) {
-        this.userService = userService;
-    }
-
-    @GetMapping("/all") public ResponseEntity<?> getAll() {
+    @GetMapping()
+    public ResponseEntity<?> getAll() {
 
         return ResponseEntity.status(HttpStatus.OK).body(userService.getAll());
     }
 
-    @PostMapping("/register")
-    public ResponseEntity<UserResponseDto> registerUser(@RequestBody @Valid UserRequestDto userRequestDto) {
-        return ResponseEntity.status(HttpStatus.OK).body(userService.registerUser(userRequestDto));
+    @PostMapping()
+    public ResponseEntity<UserResponseDto> createUser(@RequestBody @Valid UserRequestDto userRequestDto) {
+        return ResponseEntity.status(HttpStatus.OK).body(userService.create(userRequestDto));
     }
 
-    @DeleteMapping("/{guid}") public ResponseEntity<?> deleteUser(@PathVariable("guid") UUID guid)
-            throws InstanceNotFoundException {
-        return ResponseEntity.status(HttpStatus.OK).body(userService.deleteUser(guid));
+    @DeleteMapping("/{guid}")
+    public ResponseEntity<?> deleteUser(@PathVariable("guid") UUID guid)
+            throws EntityNotFoundException {
+        userService.delete(guid);
+        return ResponseEntity.status(HttpStatus.OK).body("Deleted.");
     }
 
-    @GetMapping("/{guid}") public ResponseEntity<?> getUser(@PathVariable("guid") UUID guid)
-            throws InstanceNotFoundException {
+    @GetMapping("/{guid}")
+    public ResponseEntity<?> getUser(@PathVariable("guid") UUID guid)
+            throws EntityNotFoundException {
         return ResponseEntity.status(HttpStatus.OK).body(userService.getByGuid(guid));
     }
 
-    @PutMapping("/{guid}") public ResponseEntity<?> editUser(@RequestBody @Valid UserRequestDto userRequestDto,
+    @PutMapping("/{guid}")
+    public ResponseEntity<?> editUser(@RequestBody @Valid UserRequestDto userRequestDto,
                                                              @PathVariable("guid") UUID guid)
-            throws InstanceNotFoundException {
-        return ResponseEntity.status(HttpStatus.OK).body(userService.editUser(userRequestDto, guid));
+            throws EntityNotFoundException, DuplicateKeyException {
+        return ResponseEntity.status(HttpStatus.OK).body(userService.edit(userRequestDto, guid));
     }
 }

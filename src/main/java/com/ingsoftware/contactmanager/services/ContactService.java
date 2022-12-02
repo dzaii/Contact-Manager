@@ -4,91 +4,111 @@ import com.ingsoftware.contactmanager.dtos.ContactRequestDto;
 import com.ingsoftware.contactmanager.dtos.ContactResponseDto;
 import com.ingsoftware.contactmanager.mappers.ContactMapper;
 import com.ingsoftware.contactmanager.models.Contact;
+import com.ingsoftware.contactmanager.models.ContactType;
 import com.ingsoftware.contactmanager.models.User;
+import com.ingsoftware.contactmanager.models.enums.UserRole;
 import com.ingsoftware.contactmanager.repositories.ContactRepository;
 
+import com.ingsoftware.contactmanager.repositories.ContactTypeRepository;
 import com.ingsoftware.contactmanager.repositories.UserRepository;
 import lombok.AllArgsConstructor;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import javax.management.InstanceNotFoundException;
+
+import javax.persistence.EntityNotFoundException;
+import java.nio.file.AccessDeniedException;
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 
 @Service
-@Transactional
 @AllArgsConstructor
 public class ContactService {
-
 
     private ContactRepository contactRepository;
     private ContactMapper contactMapper;
     private UserRepository userRepository;
+    private ContactTypeRepository contactTypeRepository;
 
-
+    @Transactional(readOnly = true)
     public List<ContactResponseDto> getAll() {
         return contactMapper.entityToResponse(contactRepository.findAll());
     }
 
-    public List<ContactResponseDto> getAllByUser(String email){
+    @Transactional(readOnly = true)
+    public List<ContactResponseDto> getAllByUser(String email, String search) {
 
         User user = userRepository.findByEmail(email).get();
 
         return contactMapper.entityToResponse(contactRepository.findByUser(user));
     }
 
-    public ContactResponseDto create(String email, ContactRequestDto contactRequestDto){
+    @Transactional(rollbackFor = Exception.class)
+    public ContactResponseDto create(String email, ContactRequestDto contactRequestDto) {
 
         User user = userRepository.findByEmail(email).get();
         Contact contact = contactMapper.requestToEntity(contactRequestDto);
         contact.setUser(user);
 
+        if (contactRequestDto.getType() != null) {
+            ContactType contactType = contactTypeRepository.findByValue(contactRequestDto.getType())
+                    .orElseThrow(() -> new EntityNotFoundException("Invalid contact type."));
+
+            contact.setContactType(contactType);
+        }
         return contactMapper.entityToResponse(contactRepository.save(contact));
-
-
     }
 
-    public String delete(String email, UUID contactGuid) throws InstanceNotFoundException {
+    @Transactional(rollbackFor = Exception.class)
+    public void delete(String email, UUID contactGuid) throws EntityNotFoundException, AccessDeniedException {
+
         User user = userRepository.findByEmail(email).get();
-        Optional<Contact> contactOptional = contactRepository.findByGuid(contactGuid);
+        Contact contact = findByGuid(contactGuid);
 
-        if (contactOptional.isPresent()) {
-            Contact contact = contactOptional.get();
+        if (user.getId() == contact.getUser().getId()) {
+            contactRepository.delete(contact);
+            return;
+        }
+        throw new AccessDeniedException("Contact does not belong to current user.");
+    }
 
-            if (user.getId() == contact.getUser().getId()) {
-                contactRepository.delete(contact);
-                return "Deleted contact.";
+    @Transactional(rollbackFor = Exception.class)
+    public ContactResponseDto edit(String email, UUID contactGuid, ContactRequestDto contactRequestDto)
+            throws AccessDeniedException {
+
+        User user = userRepository.findByEmail(email).get();
+        Contact contact = findByGuid(contactGuid);
+
+        if (user.getId() == contact.getUser().getId()) {
+
+            if (contactRequestDto.getType() != null) {
+                ContactType contactType = contactTypeRepository.findByValue(contactRequestDto.getType())
+                        .orElseThrow(() -> new EntityNotFoundException("Invalid contact type."));
+                contact.setContactType(contactType);
             }
 
+            contactMapper.updateEntityFromRequest(contact, contactRequestDto);
+            return contactMapper.entityToResponse(contactRepository.save(contact));
         }
-        throw new InstanceNotFoundException("Contact not found.");
+        throw new AccessDeniedException("Contact does not belong to current user.");
     }
 
-    public ContactResponseDto editContact(String email, UUID contactGuid, ContactRequestDto contactRequestDto)
-            throws InstanceNotFoundException {
+    private Contact findByGuid(UUID guid) throws EntityNotFoundException {
+        return contactRepository.findByGuid(guid)
+                .orElseThrow(() -> new EntityNotFoundException("Contact not found."));
+    }
+
+    @Transactional(readOnly = true)
+    public ContactResponseDto getByGuid(String email, UUID contactGuid)
+            throws EntityNotFoundException, AccessDeniedException {
+
+        Contact contact = findByGuid(contactGuid);
         User user = userRepository.findByEmail(email).get();
-        Optional<Contact> contactOptional = contactRepository.findByGuid(contactGuid);
 
-        if (contactOptional.isPresent()) {
-
-            Contact contact = contactOptional.get();
-
-            if (user.getId() == contact.getUser().getId()) {
-                contact.setFirstName(contactRequestDto.getFirstName());
-                contact.setLastName(contactRequestDto.getLastName());
-                contact.setEmail(contactRequestDto.getEmail());
-                contact.setPhoneNumber(contactRequestDto.getPhoneNumber());
-                contact.setAddress(contactRequestDto.getAddress());
-//                contact.setContactType();
-                contact.setInfo(contactRequestDto.getInfo());
-
-                return contactMapper.entityToResponse(contactRepository.save(contact));
-            }
-
+        if ((contact.getUser().getId() == user.getId()) || user.getRole().equals(UserRole.ADMIN)) {
+            return contactMapper.entityToResponse(contact);
         }
-        throw new InstanceNotFoundException("Contact not found.");
+        throw new AccessDeniedException("Contact does not belong to current user.");
     }
-
 }

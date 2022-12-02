@@ -20,30 +20,26 @@ public class SecurityConfig {
     private CustomUserDetailsService customUserDetailsService;
 
     @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception{
+    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
                 .csrf().disable()
                 .sessionManagement()
                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 .and()
                 .authorizeRequests()
-                .antMatchers("/users/register").permitAll()
-                .antMatchers("/users/contacts/**").hasAnyAuthority()
                 .antMatchers("/users/**").hasAuthority(UserRole.ADMIN.name())
-                .antMatchers("/contacts").hasAuthority(UserRole.ADMIN.name())
+                .antMatchers("/contacts/all").hasAuthority(UserRole.ADMIN.name())
                 .antMatchers("/contacts/types/**").hasAuthority(UserRole.ADMIN.name())
                 .anyRequest().authenticated()
                 .and()
                 .httpBasic();
 
-
         return http.build();
     }
 
     @Bean
-    PasswordEncoder passwordEncoder(){
+    PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
-
 
 }

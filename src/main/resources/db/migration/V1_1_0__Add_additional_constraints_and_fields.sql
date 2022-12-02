@@ -19,3 +19,6 @@ ADD COLUMN guid uuid UNIQUE NOT NULL DEFAULT gen_random_uuid ();
 
 ALTER TABLE users
 ADD COLUMN guid uuid UNIQUE NOT NULL DEFAULT gen_random_uuid ();
+
+ALTER TABLE contact_types
+ADD COLUMN guid uuid UNIQUE NOT NULL DEFAULT gen_random_uuid ();
