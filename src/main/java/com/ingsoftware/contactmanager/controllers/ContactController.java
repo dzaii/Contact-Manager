@@ -6,29 +6,37 @@ import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.CurrentSecurityContext;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 
 import javax.persistence.EntityNotFoundException;
 import javax.validation.Valid;
+import javax.validation.constraints.Size;
 import java.nio.file.AccessDeniedException;
 import java.util.UUID;
 
 @RestController
 @RequestMapping("/contacts")
 @AllArgsConstructor
+@Validated
 public class ContactController {
 
     private ContactService contactService;
 
+
     @GetMapping("/all")
-    public ResponseEntity<?> getAll() {
-        return ResponseEntity.status(HttpStatus.OK).body(contactService.getAll());
+    public ResponseEntity<?> getAll(@RequestParam(required = false)
+                                    @Size(min = 3, message = "Search requires at least 3 characters.")
+                                    String search) {
+        return ResponseEntity.status(HttpStatus.OK).body(contactService.getAll(search));
     }
 
     @GetMapping()
     public ResponseEntity<?> getAllUserContacts(@CurrentSecurityContext(expression="authentication.name") String email,
-                                                @RequestParam(required = false) String search) {
+                                                @RequestParam(required = false)
+                                                @Size(min = 3, message = "Search requires at least 3 characters.")
+                                                String search) {
         return ResponseEntity.status(HttpStatus.OK).body(contactService.getAllByUser(email,search));
     }
 

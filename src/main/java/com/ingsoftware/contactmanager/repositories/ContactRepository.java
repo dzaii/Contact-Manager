@@ -23,10 +23,44 @@ public interface ContactRepository extends JpaRepository<Contact,Integer>, JpaSp
     Optional<Contact> findByGuid(UUID guid);
     List<Contact> findByContactType(ContactType contactType);
 
+
+    @Query(value = "SELECT * FROM contacts WHERE  " +
+
+            "       (LOWER(first_name)   like :search% " +
+            "     or LOWER(last_name)    like :search% " +
+            "     or LOWER(email)        like %:search2% " +
+            "     or LOWER(phone_number) like %:search2%)" +
+
+            "     order by  (LOWER(first_name) like :search% or LOWER(last_name) like :search%) desc nulls last," +
+            "                COALESCE(first_name, last_name, email, phone_number);",
+            nativeQuery = true)
+
+    List<Contact> findAllSearch(@Param("search") String search,
+                                @Param("search2") String search2);
+
+    @Query(value = "SELECT * FROM contacts WHERE  " +
+            "        user_id = :userId AND "+
+
+            "       (LOWER(first_name)   like :search% " +
+            "     or LOWER(last_name)    like :search% " +
+            "     or LOWER(email)        like %:search2% " +
+            "     or LOWER(phone_number) like %:search2%)" +
+
+            "     order by  (LOWER(first_name) like :search% or LOWER(last_name) like :search%) desc nulls last," +
+            "                COALESCE(first_name, last_name, email, phone_number);",
+            nativeQuery = true)
+
+    List<Contact> findAllUserSearch(@Param("userId") int userId,
+                                    @Param("search") String search,
+                                    @Param("search2") String search2);
+
+
     @Transactional
     @Modifying
     @Query(value = "UPDATE contacts SET type_id = NULL WHERE type_id = :id", nativeQuery = true)
     void setTypeIdToNull(@Param("id") int x);
+
+
 
 
 }
