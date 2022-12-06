@@ -4,13 +4,12 @@ import com.ingsoftware.contactmanager.dtos.UserRequestDto;
 import com.ingsoftware.contactmanager.dtos.UserResponseDto;
 import com.ingsoftware.contactmanager.services.UserService;
 import lombok.AllArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DuplicateKeyException;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import javax.management.InstanceNotFoundException;
 import javax.persistence.EntityNotFoundException;
 import javax.validation.Valid;
 import java.util.UUID;
@@ -23,9 +22,9 @@ public class UserController {
     private final UserService userService;
 
     @GetMapping()
-    public ResponseEntity<?> getAll() {
+    public ResponseEntity<?> getAll(Pageable pageable) {
 
-        return ResponseEntity.status(HttpStatus.OK).body(userService.getAll());
+        return ResponseEntity.status(HttpStatus.OK).body(userService.getAll(pageable));
     }
 
     @PostMapping()

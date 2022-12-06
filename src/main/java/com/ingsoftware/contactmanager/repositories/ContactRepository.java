@@ -3,7 +3,8 @@ package com.ingsoftware.contactmanager.repositories;
 import com.ingsoftware.contactmanager.models.Contact;
 import com.ingsoftware.contactmanager.models.ContactType;
 import com.ingsoftware.contactmanager.models.User;
-import org.springframework.data.jpa.domain.Specification;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Modifying;
@@ -19,7 +20,7 @@ import java.util.UUID;
 @Repository
 public interface ContactRepository extends JpaRepository<Contact,Integer>, JpaSpecificationExecutor<Contact> {
 
-    List<Contact> findByUser(User user);
+    Page<Contact> findByUser(User user, Pageable pageable);
     Optional<Contact> findByGuid(UUID guid);
     List<Contact> findByContactType(ContactType contactType);
 
@@ -32,11 +33,10 @@ public interface ContactRepository extends JpaRepository<Contact,Integer>, JpaSp
             "     or LOWER(phone_number) like %:search2%)" +
 
             "     order by  (LOWER(first_name) like :search% or LOWER(last_name) like :search%) desc nulls last," +
-            "                COALESCE(first_name, last_name, email, phone_number);",
+            "                COALESCE(first_name, last_name, email, phone_number)",
             nativeQuery = true)
-
-    List<Contact> findAllSearch(@Param("search") String search,
-                                @Param("search2") String search2);
+    Page<Contact> findAllSearch(@Param("search") String search,
+                                @Param("search2") String search2, Pageable pageable);
 
     @Query(value = "SELECT * FROM contacts WHERE  " +
             "        user_id = :userId AND "+
@@ -47,12 +47,13 @@ public interface ContactRepository extends JpaRepository<Contact,Integer>, JpaSp
             "     or LOWER(phone_number) like %:search2%)" +
 
             "     order by  (LOWER(first_name) like :search% or LOWER(last_name) like :search%) desc nulls last," +
-            "                COALESCE(first_name, last_name, email, phone_number);",
+            "                COALESCE(first_name, last_name, email, phone_number)",
             nativeQuery = true)
 
-    List<Contact> findAllUserSearch(@Param("userId") int userId,
+    Page<Contact> findAllUserSearch(@Param("userId") int userId,
                                     @Param("search") String search,
-                                    @Param("search2") String search2);
+                                    @Param("search2") String search2,
+                                    Pageable pageable);
 
 
     @Transactional

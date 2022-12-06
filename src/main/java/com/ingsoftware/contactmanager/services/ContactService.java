@@ -13,6 +13,8 @@ import com.ingsoftware.contactmanager.repositories.ContactTypeRepository;
 import com.ingsoftware.contactmanager.repositories.UserRepository;
 import lombok.AllArgsConstructor;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
@@ -26,7 +28,6 @@ import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Predicate;
 import javax.persistence.criteria.Root;
 import java.nio.file.AccessDeniedException;
-import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -39,23 +40,24 @@ public class ContactService {
     private ContactTypeRepository contactTypeRepository;
 
     @Transactional(readOnly = true)
-    public List<ContactResponseDto> getAll(String search) {
+    public Page<ContactResponseDto> getAll(String search, Pageable pageable) {
         if(StringUtils.hasText(search)) {
-            return contactMapper.entityToResponse(contactRepository.findAllSearch(search, search));
+            return contactRepository.findAllSearch(search, search,pageable).map(contactMapper::entityToResponse);
         }
-            return contactMapper.entityToResponse(contactRepository.findAll());
+            return contactRepository.findAll(pageable).map(contactMapper::entityToResponse);
     }
 
     @Transactional(readOnly = true)
-    public List<ContactResponseDto> getAllByUser(String email, String search) {
+    public Page<ContactResponseDto> getAllByUser(String email, String search, Pageable pageable) {
 
         User user = userRepository.findByEmail(email).get();
         int userId = user.getId();
 
         if(StringUtils.hasText(search)){
-            return contactMapper.entityToResponse(contactRepository.findAllUserSearch(userId,search.toLowerCase(),search.toLowerCase()));
+            return contactRepository.findAllUserSearch(userId,search.toLowerCase(),search.toLowerCase(),pageable)
+                    .map(contactMapper::entityToResponse);
         }
-            return contactMapper.entityToResponse(contactRepository.findByUser(user));
+            return contactRepository.findByUser(user,pageable).map( contactMapper::entityToResponse);
 //
 //        List<Contact> contacts = contactRepository.findAll(new Specification<Contact>() {
 //            @Override

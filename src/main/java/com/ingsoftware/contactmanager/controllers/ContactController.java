@@ -3,6 +3,8 @@ package com.ingsoftware.contactmanager.controllers;
 import com.ingsoftware.contactmanager.dtos.ContactRequestDto;
 import com.ingsoftware.contactmanager.services.ContactService;
 import lombok.AllArgsConstructor;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.CurrentSecurityContext;
@@ -28,16 +30,16 @@ public class ContactController {
     @GetMapping("/all")
     public ResponseEntity<?> getAll(@RequestParam(required = false)
                                     @Size(min = 3, message = "Search requires at least 3 characters.")
-                                    String search) {
-        return ResponseEntity.status(HttpStatus.OK).body(contactService.getAll(search));
+                                    String search,Pageable pageable) {
+        return ResponseEntity.status(HttpStatus.OK).body(contactService.getAll(search,pageable));
     }
 
     @GetMapping()
     public ResponseEntity<?> getAllUserContacts(@CurrentSecurityContext(expression="authentication.name") String email,
                                                 @RequestParam(required = false)
                                                 @Size(min = 3, message = "Search requires at least 3 characters.")
-                                                String search) {
-        return ResponseEntity.status(HttpStatus.OK).body(contactService.getAllByUser(email,search));
+                                                String search, Pageable pageable) {
+        return ResponseEntity.status(HttpStatus.OK).body(contactService.getAllByUser(email,search, pageable));
     }
 
     @GetMapping("/{contactGuid}")
