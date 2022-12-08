@@ -15,18 +15,12 @@ import lombok.AllArgsConstructor;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
-import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 
 import javax.persistence.EntityNotFoundException;
-import javax.persistence.criteria.CriteriaBuilder;
-import javax.persistence.criteria.CriteriaQuery;
-import javax.persistence.criteria.Predicate;
-import javax.persistence.criteria.Root;
 import java.nio.file.AccessDeniedException;
 import java.util.UUID;
 
@@ -42,7 +36,7 @@ public class ContactService {
     @Transactional(readOnly = true)
     public Page<ContactResponseDto> getAll(String search, Pageable pageable) {
         if(StringUtils.hasText(search)) {
-            return contactRepository.findAllSearch(search, search,pageable).map(contactMapper::entityToResponse);
+            return contactRepository.searchAllContacts(search, search,pageable).map(contactMapper::entityToResponse);
         }
             return contactRepository.findAll(pageable).map(contactMapper::entityToResponse);
     }
@@ -54,30 +48,10 @@ public class ContactService {
         int userId = user.getId();
 
         if(StringUtils.hasText(search)){
-            return contactRepository.findAllUserSearch(userId,search.toLowerCase(),search.toLowerCase(),pageable)
+            return contactRepository.searchContactsByUser(userId,search.toLowerCase(),search.toLowerCase(),pageable)
                     .map(contactMapper::entityToResponse);
         }
             return contactRepository.findByUser(user,pageable).map( contactMapper::entityToResponse);
-//
-//        List<Contact> contacts = contactRepository.findAll(new Specification<Contact>() {
-//            @Override
-//            public Predicate toPredicate(Root<Contact> root, CriteriaQuery<?> cq, CriteriaBuilder cb) {
-//
-//                Predicate c = cb.conjunction();
-//                Predicate p = cb.and(c, cb.equal(root.get("user"), user));
-//
-//                if (search != null) {
-//                    c = cb.and(c, cb.like(root.get("firstName"), search + "%"));
-//                    c = cb.or(c, cb.like(root.get("lastName"), search + "%"));
-//                    c = cb.or(c, cb.like(root.get("email"), "%" + search + "%"));
-//                    c = cb.or(c, cb.like(root.get("phoneNumber"), "%" + search + "%"));
-//                }
-//
-//                cq.orderBy(cb.desc(cb.like(root.get("firstName"), search + "%")));
-//                return cb.and(p, c);
-//            }
-//        });
-//        return contactMapper.entityToResponse(contacts);
     }
 
     @Transactional(rollbackFor = Exception.class)

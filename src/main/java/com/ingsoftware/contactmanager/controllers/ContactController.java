@@ -71,7 +71,7 @@ public class ContactController {
 
         contactService.delete(email, contactGuid);
 
-        return ResponseEntity.status(HttpStatus.OK).body("Deleted.");
+        return new ResponseEntity<>(HttpStatus.OK);
     }
 
     @PutMapping("/{contactGuid}")

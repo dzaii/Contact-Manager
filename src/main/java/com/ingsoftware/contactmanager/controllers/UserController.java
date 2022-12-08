@@ -39,7 +39,7 @@ public class UserController {
     public ResponseEntity<?> deleteUser(@PathVariable("guid") UUID guid)
             throws EntityNotFoundException {
         userService.delete(guid);
-        return ResponseEntity.status(HttpStatus.OK).body("Deleted.");
+        return new ResponseEntity<>(HttpStatus.OK);
     }
 
     @GetMapping("/{guid}")

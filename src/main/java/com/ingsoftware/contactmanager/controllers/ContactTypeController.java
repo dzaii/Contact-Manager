@@ -19,7 +19,7 @@ import java.util.UUID;
 @AllArgsConstructor
 public class ContactTypeController {
 
-    ContactTypeService contactTypeService;
+    private ContactTypeService contactTypeService;
 
     @GetMapping() public ResponseEntity<List<ContactType>> getAll() {
         return ResponseEntity.status(HttpStatus.OK).body(contactTypeService.getAll());
@@ -35,7 +35,7 @@ public class ContactTypeController {
 
         contactTypeService.delete(guid);
 
-        return ResponseEntity.status(HttpStatus.OK).body("Deleted.");
+        return new ResponseEntity<>(HttpStatus.OK);
     }
 
     @PutMapping("/{guid}") public ResponseEntity<ContactType> edit(
