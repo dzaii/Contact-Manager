@@ -35,8 +35,8 @@ public interface ContactRepository extends JpaRepository<Contact,Integer>, JpaSp
             "     order by  (LOWER(first_name) like :search% or LOWER(last_name) like :search%) desc nulls last," +
             "                COALESCE(first_name, last_name, email, phone_number)",
             nativeQuery = true)
-    Page<Contact> findAllSearch(@Param("search") String search,
-                                @Param("search2") String search2, Pageable pageable);
+    Page<Contact> searchAllContacts(@Param("search") String search,
+                                    @Param("search2") String search2, Pageable pageable);
 
     @Query(value = "SELECT * FROM contacts WHERE  " +
             "        user_id = :userId AND "+
@@ -50,10 +50,10 @@ public interface ContactRepository extends JpaRepository<Contact,Integer>, JpaSp
             "                COALESCE(first_name, last_name, email, phone_number)",
             nativeQuery = true)
 
-    Page<Contact> findAllUserSearch(@Param("userId") int userId,
-                                    @Param("search") String search,
-                                    @Param("search2") String search2,
-                                    Pageable pageable);
+    Page<Contact> searchContactsByUser(@Param("userId") int userId,
+                                       @Param("search") String search,
+                                       @Param("search2") String search2,
+                                       Pageable pageable);
 
 
     @Transactional

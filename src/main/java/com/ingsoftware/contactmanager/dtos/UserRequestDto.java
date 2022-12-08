@@ -1,5 +1,6 @@
 package com.ingsoftware.contactmanager.dtos;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
 
 import javax.validation.constraints.Email;
@@ -8,6 +9,7 @@ import javax.validation.constraints.Pattern;
 import javax.validation.constraints.Size;
 
 @Data
+@AllArgsConstructor
 public class UserRequestDto {
 
     @Size(max = 30, message = "First name must not exceed 30 characters.")
