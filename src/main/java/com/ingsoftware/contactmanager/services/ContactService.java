@@ -13,13 +13,15 @@ import com.ingsoftware.contactmanager.repositories.ContactTypeRepository;
 import com.ingsoftware.contactmanager.repositories.UserRepository;
 import lombok.AllArgsConstructor;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 
 import javax.persistence.EntityNotFoundException;
 import java.nio.file.AccessDeniedException;
-import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -32,16 +34,24 @@ public class ContactService {
     private ContactTypeRepository contactTypeRepository;
 
     @Transactional(readOnly = true)
-    public List<ContactResponseDto> getAll() {
-        return contactMapper.entityToResponse(contactRepository.findAll());
+    public Page<ContactResponseDto> getAll(String search, Pageable pageable) {
+        if(StringUtils.hasText(search)) {
+            return contactRepository.searchAllContacts(search, search,pageable).map(contactMapper::entityToResponse);
+        }
+            return contactRepository.findAll(pageable).map(contactMapper::entityToResponse);
     }
 
     @Transactional(readOnly = true)
-    public List<ContactResponseDto> getAllByUser(String email, String search) {
+    public Page<ContactResponseDto> getAllByUser(String email, String search, Pageable pageable) {
 
         User user = userRepository.findByEmail(email).get();
+        int userId = user.getId();
 
-        return contactMapper.entityToResponse(contactRepository.findByUser(user));
+        if(StringUtils.hasText(search)){
+            return contactRepository.searchContactsByUser(userId,search.toLowerCase(),search.toLowerCase(),pageable)
+                    .map(contactMapper::entityToResponse);
+        }
+            return contactRepository.findByUser(user,pageable).map( contactMapper::entityToResponse);
     }
 
     @Transactional(rollbackFor = Exception.class)

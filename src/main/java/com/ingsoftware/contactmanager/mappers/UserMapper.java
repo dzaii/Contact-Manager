@@ -5,12 +5,17 @@ import com.ingsoftware.contactmanager.dtos.UserResponseDto;
 import com.ingsoftware.contactmanager.models.User;
 import com.ingsoftware.contactmanager.models.enums.UserRole;
 import org.mapstruct.*;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.util.List;
 
 
 @Mapper
 public abstract class UserMapper {
+
+    @Autowired
+    PasswordEncoder passwordEncoder;
 
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "role", ignore = true)
@@ -29,8 +34,9 @@ public abstract class UserMapper {
     public abstract User updateEntityFromRequest(@MappingTarget User user, UserRequestDto userRequestDto);
 
     @AfterMapping
-    protected void addRoleToUser(@MappingTarget User user, UserRequestDto userRequestDto){
+    protected void roleAndPass(@MappingTarget User user, UserRequestDto userRequestDto){
         user.setRole(UserRole.valueOf(userRequestDto.getRole().toUpperCase()));
+        user.setPassword(passwordEncoder.encode(userRequestDto.getPassword()));
     }
 
     public abstract UserResponseDto entityToResponseDto(User user);

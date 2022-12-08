@@ -1,0 +1,29 @@
+version: '3.9'
+
+services:
+  app:
+    build:
+      context: .
+      target: build
+    ports:
+      - "8080:8080"
+    depends_on:
+       db:
+         condition: service_healthy
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://db:5432/contact_manager_db
+
+  db:
+    image: 'postgres:14.6-alpine'
+    container_name: db
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=local_rw
+      - POSTGRES_PASSWORD=localrw
+      - POSTGRES_DB=contact_manager_db
+    healthcheck:
+      test: ["CMD-SHELL", "sh -c 'pg_isready -U local_rw -d contact_manager_db'"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
