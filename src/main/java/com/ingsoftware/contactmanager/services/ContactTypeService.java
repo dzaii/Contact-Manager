@@ -10,12 +10,12 @@ import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import javax.management.InstanceNotFoundException;
+import javax.naming.directory.AttributeInUseException;
+import javax.persistence.EntityNotFoundException;
 import java.util.List;
-import java.util.Optional;
+import java.util.UUID;
 
 @Service
-@Transactional
 @AllArgsConstructor
 public class ContactTypeService {
 
@@ -23,33 +23,45 @@ public class ContactTypeService {
     private ContactRepository contactRepository;
     private ContactTypeMapper contactTypeMapper;
 
-    public List<ContactType> getAll(){
+    @Transactional(readOnly = true)
+    public List<ContactType> getAll() {
         return contactTypeRepository.findAll();
     }
 
-    public ContactType createOrUpdate(ContactTypeRequestDto contactTypeRequestDto){
-        if(contactTypeRepository.existsContactTypeByValue(contactTypeRequestDto.getValue()))
-            throw new DuplicateKeyException("Contact type already exists.");
+    @Transactional(rollbackFor = Exception.class)
+    public ContactType create(ContactTypeRequestDto contactTypeRequestDto) {
 
-        Optional<ContactType> contactTypeOptional = contactTypeRepository.findById(contactTypeRequestDto.getTypeId());
-        if(contactTypeOptional.isPresent()){
-            ContactType contactTypeOld = contactTypeOptional.get();
-            contactTypeOld.setValue(contactTypeRequestDto.getValue());
-            return contactTypeRepository.save(contactTypeOld);
+        if (contactTypeRepository.existsContactTypeByValue(contactTypeRequestDto.getValue())) {
+            throw new DuplicateKeyException("Contact type already exists.");
         }
         return contactTypeRepository.save(contactTypeMapper.requestToEntity(contactTypeRequestDto));
     }
 
-    public String delete(int id) throws InstanceNotFoundException{
-        Optional<ContactType> contactTypeOptional = contactTypeRepository.findById(id);
+    @Transactional(rollbackFor = Exception.class)
+    public ContactType edit(ContactTypeRequestDto contactTypeRequestDto, UUID guid) throws EntityNotFoundException {
 
-        if(contactTypeOptional.isPresent()){
-
-            contactRepository.setTypeIdToNull(id);
-            contactTypeRepository.deleteById(id);
-
-            return "Deleted contact type.";
+        if (contactTypeRepository.existsContactTypeByValue(contactTypeRequestDto.getValue())) {
+            throw new DuplicateKeyException("Contact type already exists.");
         }
-        throw new InstanceNotFoundException("Contact type not found.");
+
+        ContactType contactType = findByGuid(guid);
+        return contactTypeRepository.save(contactTypeMapper.updateEntityFromDto(contactType, contactTypeRequestDto));
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    public void delete(UUID guid) throws EntityNotFoundException, AttributeInUseException {
+
+        ContactType contactType = findByGuid(guid);
+
+        if (contactRepository.findByContactType(contactType).isEmpty()) {
+            contactTypeRepository.delete(contactType);
+            return;
+        }
+        throw new AttributeInUseException("Contact type currently in use.");
+    }
+
+    private ContactType findByGuid(UUID guid) throws EntityNotFoundException {
+        return contactTypeRepository.findByGuid(guid)
+                .orElseThrow(() -> new EntityNotFoundException("Contact type not found."));
     }
 }

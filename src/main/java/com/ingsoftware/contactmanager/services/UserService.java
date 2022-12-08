@@ -8,63 +8,68 @@ import com.ingsoftware.contactmanager.repositories.UserRepository;
 import lombok.AllArgsConstructor;
 
 import org.springframework.dao.DuplicateKeyException;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import javax.management.InstanceNotFoundException;
-import java.util.List;
-import java.util.Optional;
+import javax.persistence.EntityNotFoundException;
 import java.util.UUID;
 
 @Service
-@Transactional
 @AllArgsConstructor
 public class UserService {
 
     private UserRepository userRepository;
     private UserMapper userMapper;
 
-    public List<UserResponseDto> getAll() {
-        return userMapper.entityToResponseDto(userRepository.findAll());
+    @Transactional(readOnly = true)
+    public Page<UserResponseDto> getAll(Pageable pageable) {
+        return userRepository.findAll(pageable).map(userMapper::entityToResponseDto);
     }
 
-    public UserResponseDto getByGuid(UUID guid) throws InstanceNotFoundException {
-        Optional<User> user = userRepository.findByGuid(guid);
-        if (user.isPresent())
-            return userMapper.entityToResponseDto(user.get());
-        else
-            throw new InstanceNotFoundException("Invalid guid.");
+    @Transactional(readOnly = true)
+    public UserResponseDto getByGuid(UUID guid) throws EntityNotFoundException {
+        return userMapper.entityToResponseDto(findByGuid(guid));
     }
 
-    public UserResponseDto registerUser(UserRequestDto userRequestDto) {
+    @Transactional(rollbackFor = Exception.class)
+    public UserResponseDto create(UserRequestDto userRequestDto) {
 
-        if (userRepository.existsUserByEmail(userRequestDto.getEmail()))
+        if (userRepository.existsUserByEmail(userRequestDto.getEmail())) {
             throw new DuplicateKeyException("Email already exists.");
+        }
 
-        return userMapper.entityToResponseDto((userRepository.save(userMapper.requestDtoToEntity(userRequestDto))));
+        User user = userMapper.requestDtoToEntity(userRequestDto);
+        return userMapper.entityToResponseDto(userRepository.save(user));
     }
 
-    public void deleteUser(UUID guid) throws InstanceNotFoundException {
+    @Transactional(rollbackFor = Exception.class)
+    public void delete(UUID guid) throws EntityNotFoundException {
 
-        if (userRepository.deleteByGuid(guid) == 0)
-            throw new InstanceNotFoundException("Invalid guid.");
+        if (userRepository.deleteByGuid(guid) == 0) {
+            throw new EntityNotFoundException("User not found.");
+        }
     }
 
-    public UserResponseDto editUser(UserRequestDto userRequestDto, UUID guid) throws InstanceNotFoundException {
+    @Transactional(rollbackFor = Exception.class)
+    public UserResponseDto edit(UserRequestDto userRequestDto, UUID guid)
+            throws EntityNotFoundException, DuplicateKeyException {
 
-        Optional<User> userOpt = userRepository.findByGuid(guid);
+        User user = findByGuid(guid);
 
-        if (userOpt.isPresent()) {
+        if (user.getEmail().equals(userRequestDto.getEmail())
+                || !userRepository.existsUserByEmail(userRequestDto.getEmail())) {
 
-            User user = userOpt.get();
+            return userMapper.entityToResponseDto(userRepository.save(
+                    userMapper.updateEntityFromRequest(user, userRequestDto)));
+        }
+        throw new DuplicateKeyException("Email already exist.");
+    }
 
-            user.setEmail(userRequestDto.getEmail());
-            user.setFirstName(userRequestDto.getFirstName());
-            user.setLastName(userRequestDto.getLastName());
-            user.setPassword(userRequestDto.getPassword());
 
-            return userMapper.entityToResponseDto(userRepository.save(user));
-        } else
-            throw new InstanceNotFoundException("Invalid guid.");
+    private User findByGuid(UUID guid) throws EntityNotFoundException {
+        return userRepository.findByGuid(guid)
+                .orElseThrow(() -> new EntityNotFoundException("User not found."));
     }
 }

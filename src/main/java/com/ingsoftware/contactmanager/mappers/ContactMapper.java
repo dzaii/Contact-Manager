@@ -5,7 +5,6 @@ import com.ingsoftware.contactmanager.dtos.ContactResponseDto;
 import com.ingsoftware.contactmanager.models.Contact;
 import org.mapstruct.*;
 
-import javax.management.InvalidAttributeValueException;
 import java.util.List;
 
 @Mapper
@@ -22,6 +21,7 @@ public abstract class ContactMapper {
         if(contact.getContactType()!= null)
             contactResponseDto.setType(contact.getContactType().getValue());
     }
+
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "modifiedAt", ignore = true)
@@ -29,6 +29,15 @@ public abstract class ContactMapper {
     @Mapping(target = "guid", ignore = true)
     @Mapping(target = "user", ignore = true)
     public abstract Contact requestToEntity(ContactRequestDto contactRequestDto);
+
+
+    @Mapping(target = "id", ignore = true)
+    @Mapping(target = "createdAt", ignore = true)
+    @Mapping(target = "modifiedAt", ignore = true)
+    @Mapping(target = "contactType", ignore = true)
+    @Mapping(target = "guid", ignore = true)
+    @Mapping(target = "user", ignore = true)
+    public abstract Contact updateEntityFromRequest(@MappingTarget Contact contact, ContactRequestDto contactRequestDto);
 
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "createdAt", ignore = true)

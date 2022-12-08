@@ -4,97 +4,121 @@ import com.ingsoftware.contactmanager.dtos.ContactRequestDto;
 import com.ingsoftware.contactmanager.dtos.ContactResponseDto;
 import com.ingsoftware.contactmanager.mappers.ContactMapper;
 import com.ingsoftware.contactmanager.models.Contact;
+import com.ingsoftware.contactmanager.models.ContactType;
 import com.ingsoftware.contactmanager.models.User;
+import com.ingsoftware.contactmanager.models.enums.UserRole;
 import com.ingsoftware.contactmanager.repositories.ContactRepository;
 
+import com.ingsoftware.contactmanager.repositories.ContactTypeRepository;
 import com.ingsoftware.contactmanager.repositories.UserRepository;
 import lombok.AllArgsConstructor;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
-import javax.management.InstanceNotFoundException;
-import java.util.List;
-import java.util.Optional;
+
+import javax.persistence.EntityNotFoundException;
+import java.nio.file.AccessDeniedException;
 import java.util.UUID;
 
 @Service
-@Transactional
 @AllArgsConstructor
 public class ContactService {
-
 
     private ContactRepository contactRepository;
     private ContactMapper contactMapper;
     private UserRepository userRepository;
+    private ContactTypeRepository contactTypeRepository;
 
-
-    public List<ContactResponseDto> getAll() {
-        return contactMapper.entityToResponse(contactRepository.findAll());
-    }
-
-    public List<ContactResponseDto> getAllByUserGuid(UUID userGuid) throws InstanceNotFoundException {
-        Optional<User> userOptional = userRepository.findByGuid(userGuid);
-
-        if (userOptional.isPresent()) {
-            User user = userOptional.get();
-            return contactMapper.entityToResponse(contactRepository.findByUser(user));
+    @Transactional(readOnly = true)
+    public Page<ContactResponseDto> getAll(String search, Pageable pageable) {
+        if(StringUtils.hasText(search)) {
+            return contactRepository.searchAllContacts(search, search,pageable).map(contactMapper::entityToResponse);
         }
-        throw new InstanceNotFoundException("Invalid guid.");
+            return contactRepository.findAll(pageable).map(contactMapper::entityToResponse);
     }
 
-    public ContactResponseDto create(UUID userGuid, ContactRequestDto contactRequestDto)
-            throws InstanceNotFoundException {
-        Optional<User> userOptional = userRepository.findByGuid(userGuid);
+    @Transactional(readOnly = true)
+    public Page<ContactResponseDto> getAllByUser(String email, String search, Pageable pageable) {
 
-        if (userOptional.isPresent()) {
-            User user = userOptional.get();
-            Contact contact = contactMapper.requestToEntity(contactRequestDto);
-            contact.setUser(user);
+        User user = userRepository.findByEmail(email).get();
+        int userId = user.getId();
+
+        if(StringUtils.hasText(search)){
+            return contactRepository.searchContactsByUser(userId,search.toLowerCase(),search.toLowerCase(),pageable)
+                    .map(contactMapper::entityToResponse);
+        }
+            return contactRepository.findByUser(user,pageable).map( contactMapper::entityToResponse);
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    public ContactResponseDto create(String email, ContactRequestDto contactRequestDto) {
+
+        User user = userRepository.findByEmail(email).get();
+        Contact contact = contactMapper.requestToEntity(contactRequestDto);
+        contact.setUser(user);
+
+        if (contactRequestDto.getType() != null) {
+            ContactType contactType = contactTypeRepository.findByValue(contactRequestDto.getType())
+                    .orElseThrow(() -> new EntityNotFoundException("Invalid contact type."));
+
+            contact.setContactType(contactType);
+        }
+        return contactMapper.entityToResponse(contactRepository.save(contact));
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    public void delete(String email, UUID contactGuid) throws EntityNotFoundException, AccessDeniedException {
+
+        User user = userRepository.findByEmail(email).get();
+        Contact contact = findByGuid(contactGuid);
+
+        if (user.getId() == contact.getUser().getId()) {
+            contactRepository.delete(contact);
+            return;
+        }
+        throw new AccessDeniedException("Contact does not belong to current user.");
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    public ContactResponseDto edit(String email, UUID contactGuid, ContactRequestDto contactRequestDto)
+            throws AccessDeniedException {
+
+        User user = userRepository.findByEmail(email).get();
+        Contact contact = findByGuid(contactGuid);
+
+        if (user.getId() == contact.getUser().getId()) {
+
+            if (contactRequestDto.getType() != null) {
+                ContactType contactType = contactTypeRepository.findByValue(contactRequestDto.getType())
+                        .orElseThrow(() -> new EntityNotFoundException("Invalid contact type."));
+                contact.setContactType(contactType);
+            }
+
+            contactMapper.updateEntityFromRequest(contact, contactRequestDto);
             return contactMapper.entityToResponse(contactRepository.save(contact));
         }
-        throw new InstanceNotFoundException("Invalid guid.");
+        throw new AccessDeniedException("Contact does not belong to current user.");
     }
 
-    public String delete(UUID userGuid, UUID contactGuid) throws InstanceNotFoundException {
-        Optional<User> userOptional = userRepository.findByGuid(userGuid);
-        Optional<Contact> contactOptional = contactRepository.findByGuid(contactGuid);
+    private Contact findByGuid(UUID guid) throws EntityNotFoundException {
+        return contactRepository.findByGuid(guid)
+                .orElseThrow(() -> new EntityNotFoundException("Contact not found."));
+    }
 
-        if (userOptional.isPresent() && contactOptional.isPresent()) {
-            User user = userOptional.get();
-            Contact contact = contactOptional.get();
+    @Transactional(readOnly = true)
+    public ContactResponseDto getByGuid(String email, UUID contactGuid)
+            throws EntityNotFoundException, AccessDeniedException {
 
-            if (user.getId() == contact.getUser().getId()) {
-                contactRepository.delete(contact);
-                return "Deleted contact.";
-            }
+        Contact contact = findByGuid(contactGuid);
+        User user = userRepository.findByEmail(email).get();
 
+        if ((contact.getUser().getId() == user.getId()) || user.getRole().equals(UserRole.ADMIN)) {
+            return contactMapper.entityToResponse(contact);
         }
-        throw new InstanceNotFoundException("Invalid user/contact guid.");
+        throw new AccessDeniedException("Contact does not belong to current user.");
     }
-
-    public ContactResponseDto editContact(UUID userGuid, UUID contactGuid, ContactRequestDto contactRequestDto)
-            throws InstanceNotFoundException {
-        Optional<User> userOptional = userRepository.findByGuid(userGuid);
-        Optional<Contact> contactOptional = contactRepository.findByGuid(contactGuid);
-
-        if (userOptional.isPresent() && contactOptional.isPresent()) {
-            User user = userOptional.get();
-            Contact contact = contactOptional.get();
-
-            if (user.getId() == contact.getUser().getId()) {
-                contact.setFirstName(contactRequestDto.getFirstName());
-                contact.setLastName(contactRequestDto.getLastName());
-                contact.setEmail(contactRequestDto.getEmail());
-                contact.setPhoneNumber(contactRequestDto.getPhoneNumber());
-                contact.setAddress(contactRequestDto.getAddress());
-//                contact.setContactType();
-                contact.setInfo(contactRequestDto.getInfo());
-
-                return contactMapper.entityToResponse(contactRepository.save(contact));
-            }
-
-        }
-        throw new InstanceNotFoundException("Invalid user/contact guid.");
-    }
-
 }
