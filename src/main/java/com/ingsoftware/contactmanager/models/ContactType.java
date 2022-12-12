@@ -1,6 +1,7 @@
 package com.ingsoftware.contactmanager.models;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import lombok.Builder;
 import lombok.Data;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.Generated;
@@ -15,6 +16,7 @@ import java.util.UUID;
 
 @Data
 @Entity
+@Builder
 @Table(name = "contact_types")
 public class ContactType {
 

@@ -2,6 +2,7 @@ package com.ingsoftware.contactmanager.models;
 
 import com.ingsoftware.contactmanager.models.enums.UserRole;
 
+import lombok.Builder;
 import lombok.Data;
 import org.hibernate.annotations.*;
 
@@ -17,6 +18,7 @@ import java.util.UUID;
 
 @Data
 @Entity
+@Builder
 @Table(name = "users")
 public class User {
 

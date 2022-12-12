@@ -1,11 +1,13 @@
 package com.ingsoftware.contactmanager.dtos;
 
 import com.ingsoftware.contactmanager.validation.annotations.Contact;
+import lombok.Builder;
 import lombok.Data;
 
 import javax.validation.constraints.Size;
 
 @Data
+@Builder
 @Contact(message = "At least one primary attribute must be present.")
 public class ContactRequestDto {
 
