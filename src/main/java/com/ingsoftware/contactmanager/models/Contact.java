@@ -20,9 +20,6 @@ import java.util.UUID;
 @Data
 @Entity
 @Table(name = "contacts")
-@NoArgsConstructor
-@AllArgsConstructor
-@Builder
 public class Contact {
 
     @Id

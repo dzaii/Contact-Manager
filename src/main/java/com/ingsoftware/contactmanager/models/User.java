@@ -2,8 +2,10 @@ package com.ingsoftware.contactmanager.models;
 
 import com.ingsoftware.contactmanager.models.enums.UserRole;
 
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import org.hibernate.annotations.*;
 
 import javax.persistence.*;
@@ -18,7 +20,6 @@ import java.util.UUID;
 
 @Data
 @Entity
-@Builder
 @Table(name = "users")
 public class User {
 

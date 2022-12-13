@@ -43,11 +43,11 @@ public class ContactServiceTests {
     private ContactTypeRepository contactTypeRepository;
     @Mock
     private ContactMapper contactMapper;
-
     @InjectMocks
     private ContactService contactService;
 
     private User user;
+    private User user2;
     private Contact contact;
     private ContactResponseDto contactResponseDto;
     private ContactRequestDto contactRequestDto;
@@ -55,11 +55,31 @@ public class ContactServiceTests {
 
     @BeforeEach
     public void init(){
-        user = User.builder().id(1).email("user@email.com").password("password").build();
-        contact = Contact.builder().firstName("Test").lastName("Contact").build();
-        contactResponseDto = ContactResponseDto.builder().firstName("Test").lastName("Contact").build();
-        contactRequestDto =  ContactRequestDto.builder().firstName("Test").lastName("Contact").build();
-        contactType = ContactType.builder().value("Type").build();
+
+        user = new User();
+        user.setId(1);
+        user.setEmail("user@email.com");
+        user.setPassword("password");
+
+        user2 = new User();
+        user2.setId(2);
+        user2.setEmail("user2@email.com");
+        user2.setPassword("password");
+
+        contact = new Contact();
+        contact.setFirstName("Test");
+        contact.setLastName("Contact");
+
+        contactResponseDto = new ContactResponseDto();
+        contactResponseDto.setFirstName("Test");
+        contactResponseDto.setLastName("Contact");
+
+        contactRequestDto = new ContactRequestDto();
+        contactRequestDto.setFirstName("Test");
+        contactRequestDto.setLastName("Contact");
+
+        contactType = new ContactType();
+        contactType.setValue("Type");
     }
 
     @Test
@@ -82,7 +102,6 @@ public class ContactServiceTests {
 
         verify(contactMapper, times(1)).requestToEntity(any(ContactRequestDto.class));
         verify(contactMapper, times(1)).entityToResponse(contact);
-
     }
 
     @Test
@@ -142,7 +161,7 @@ public class ContactServiceTests {
     @Test
     public void ContactService_Edit_ContactDoesNotBelongToUser(){
 
-        contact.setUser(User.builder().id(2).email("user2@email.com").password("password").build());
+        contact.setUser(user2);
 
         when(userRepository.findByEmail(anyString())).thenReturn(Optional.of(user));
         when(contactRepository.findByGuid(any(UUID.class))).thenReturn(Optional.of(contact));
@@ -198,7 +217,7 @@ public class ContactServiceTests {
     public void ContactService_GetByGuid_ReturnsContactResponseDtoToAdmin() throws AccessDeniedException {
 
         user.setRole(UserRole.ADMIN);
-        contact.setUser(User.builder().id(2).email("user2@email.com").password("password").build());
+        contact.setUser(user2);
 
         when(userRepository.findByEmail(anyString())).thenReturn(Optional.of(user));
         when(contactRepository.findByGuid(any(UUID.class))).thenReturn(Optional.of(contact));
@@ -214,7 +233,7 @@ public class ContactServiceTests {
     public void ContactService_GetByGuid_UserDoesNotHaveAuthority() {
 
         user.setRole(UserRole.USER);
-        contact.setUser(User.builder().id(2).email("user2@email.com").password("password").build());
+        contact.setUser(user2);
 
         when(userRepository.findByEmail(anyString())).thenReturn(Optional.of(user));
         when(contactRepository.findByGuid(any(UUID.class))).thenReturn(Optional.of(contact));
@@ -243,7 +262,7 @@ public class ContactServiceTests {
     @Test
     public void ContactService_Delete_UserDoesNotHaveAuthority() {
 
-        contact.setUser(User.builder().id(2).email("user2@email.com").password("password").build());
+        contact.setUser(user2);
 
 
         when(userRepository.findByEmail(anyString())).thenReturn(Optional.of(user));

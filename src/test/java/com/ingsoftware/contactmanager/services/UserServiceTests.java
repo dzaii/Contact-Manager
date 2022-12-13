@@ -32,10 +32,10 @@ public class UserServiceTests {
     @Test
     public void userService_GetByGuid_ReturnsOneUserResponseDto(){
 
-        final User testUser = User.builder()
-                .email("user@email.com")
-                .password("password")
-                .build();
+        final User testUser = new User();
+                   testUser.setId(1);
+                   testUser.setEmail("user@email.com");
+                   testUser.setPassword("password");
 
         final UserResponseDto testDto = new UserResponseDto();
         testDto.setEmail("user@email.com");

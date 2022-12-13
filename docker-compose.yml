@@ -17,7 +17,7 @@ services:
     image: 'postgres:14.6-alpine'
     container_name: db
     ports:
-      - "5432:5432"
+      - "5433:5432"
     environment:
       - POSTGRES_USER=local_rw
       - POSTGRES_PASSWORD=localrw
