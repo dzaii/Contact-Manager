@@ -22,6 +22,7 @@ public class UserService {
 
     private UserRepository userRepository;
     private UserMapper userMapper;
+    private EmailService emailService;
 
     @Transactional(readOnly = true)
     public Page<UserResponseDto> getAll(Pageable pageable) {
@@ -41,6 +42,8 @@ public class UserService {
         }
 
         User user = userMapper.requestDtoToEntity(userRequestDto);
+        emailService.sendConfirmationEmail(user.getEmail());
+
         return userMapper.entityToResponseDto(userRepository.save(user));
     }
 
