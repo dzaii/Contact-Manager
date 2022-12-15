@@ -31,7 +31,7 @@ public class ContactTypeService {
     @Transactional(rollbackFor = Exception.class)
     public ContactType create(ContactTypeRequestDto contactTypeRequestDto) {
 
-        if (contactTypeRepository.existsContactTypeByValue(contactTypeRequestDto.getValue())) {
+        if (contactTypeRepository.existsContactTypeByValueIgnoreCase(contactTypeRequestDto.getValue())) {
             throw new DuplicateKeyException("Contact type already exists.");
         }
         return contactTypeRepository.save(contactTypeMapper.requestToEntity(contactTypeRequestDto));
@@ -40,7 +40,7 @@ public class ContactTypeService {
     @Transactional(rollbackFor = Exception.class)
     public ContactType edit(ContactTypeRequestDto contactTypeRequestDto, UUID guid) throws EntityNotFoundException {
 
-        if (contactTypeRepository.existsContactTypeByValue(contactTypeRequestDto.getValue())) {
+        if (contactTypeRepository.existsContactTypeByValueIgnoreCase(contactTypeRequestDto.getValue())) {
             throw new DuplicateKeyException("Contact type already exists.");
         }
 

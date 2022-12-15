@@ -10,7 +10,7 @@ import java.util.UUID;
 @Repository
 public interface ContactTypeRepository extends JpaRepository<ContactType,Integer> {
 
-    boolean existsContactTypeByValue(String value);
+    boolean existsContactTypeByValueIgnoreCase(String value);
     Optional<ContactType> findByGuid(UUID guid);
-    Optional<ContactType> findByValue(String value);
+    Optional<ContactType> findByValueIgnoreCase(String value);
 }
