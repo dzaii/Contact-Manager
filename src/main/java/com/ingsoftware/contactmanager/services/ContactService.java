@@ -36,7 +36,7 @@ public class ContactService {
     @Transactional(readOnly = true)
     public Page<ContactResponseDto> getAll(String search, Pageable pageable) {
         if(StringUtils.hasText(search)) {
-            return contactRepository.searchAllContacts(search, search,pageable).map(contactMapper::entityToResponse);
+            return contactRepository.searchAllContacts(search.toLowerCase(), search.toLowerCase(),pageable).map(contactMapper::entityToResponse);
         }
             return contactRepository.findAll(pageable).map(contactMapper::entityToResponse);
     }
