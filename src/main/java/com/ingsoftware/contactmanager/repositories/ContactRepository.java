@@ -55,14 +55,5 @@ public interface ContactRepository extends JpaRepository<Contact,Integer>, JpaSp
                                        @Param("search2") String search2,
                                        Pageable pageable);
 
-
-    @Transactional
-    @Modifying
-    @Query(value = "UPDATE contacts SET type_id = NULL WHERE type_id = :id", nativeQuery = true)
-    void setTypeIdToNull(@Param("id") int x);
-
-
-
-
 }
 

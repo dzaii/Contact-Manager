@@ -10,6 +10,7 @@ import javax.validation.constraints.Size;
 
 @Data
 @Contact(message = "At least one primary attribute must be present.")
+@AllArgsConstructor
 public class ContactRequestDto {
 
     @Size(max = 30, message = "First name must not exceed 30 characters.")

@@ -22,6 +22,7 @@ public class UserService {
 
     private UserRepository userRepository;
     private UserMapper userMapper;
+    private EmailService emailService;
 
     @Transactional(readOnly = true)
     public Page<UserResponseDto> getAll(Pageable pageable) {
@@ -36,11 +37,13 @@ public class UserService {
     @Transactional(rollbackFor = Exception.class)
     public UserResponseDto create(UserRequestDto userRequestDto) {
 
-        if (userRepository.existsUserByEmail(userRequestDto.getEmail())) {
+        if (userRepository.existsUserByEmailIgnoreCase(userRequestDto.getEmail())) {
             throw new DuplicateKeyException("Email already exists.");
         }
 
         User user = userMapper.requestDtoToEntity(userRequestDto);
+        emailService.sendConfirmationEmail(user.getEmail());
+
         return userMapper.entityToResponseDto(userRepository.save(user));
     }
 
@@ -59,7 +62,7 @@ public class UserService {
         User user = findByGuid(guid);
 
         if (user.getEmail().equals(userRequestDto.getEmail())
-                || !userRepository.existsUserByEmail(userRequestDto.getEmail())) {
+                || !userRepository.existsUserByEmailIgnoreCase(userRequestDto.getEmail())) {
 
             return userMapper.entityToResponseDto(userRepository.save(
                     userMapper.updateEntityFromRequest(user, userRequestDto)));

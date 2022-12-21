@@ -2,6 +2,8 @@ package com.ingsoftware.contactmanager.services;
 
 import com.ingsoftware.contactmanager.dtos.ContactRequestDto;
 import com.ingsoftware.contactmanager.dtos.ContactResponseDto;
+import com.ingsoftware.contactmanager.exeptionHandlers.ErrorDetails;
+import com.ingsoftware.contactmanager.mappers.CSVMapper;
 import com.ingsoftware.contactmanager.mappers.ContactMapper;
 import com.ingsoftware.contactmanager.models.Contact;
 import com.ingsoftware.contactmanager.models.ContactType;
@@ -10,6 +12,8 @@ import com.ingsoftware.contactmanager.models.enums.UserRole;
 import com.ingsoftware.contactmanager.repositories.ContactRepository;
 import com.ingsoftware.contactmanager.repositories.ContactTypeRepository;
 import com.ingsoftware.contactmanager.repositories.UserRepository;
+import org.apache.el.parser.ParseException;
+import org.apache.tomcat.util.http.fileupload.FileUploadException;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -21,12 +25,16 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.mock.web.MockMultipartFile;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.persistence.EntityNotFoundException;
+import javax.validation.ConstraintViolation;
+import javax.validation.Validator;
+import java.io.IOException;
 import java.nio.file.AccessDeniedException;
-import java.util.Arrays;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
+import java.util.zip.DataFormatException;
 
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.mockito.ArgumentMatchers.any;
@@ -43,6 +51,10 @@ public class ContactServiceTests {
     private ContactTypeRepository contactTypeRepository;
     @Mock
     private ContactMapper contactMapper;
+    @Mock
+    private CSVMapper csvMapper;
+    @Mock
+    private Validator validator;
     @InjectMocks
     private ContactService contactService;
 
@@ -74,9 +86,8 @@ public class ContactServiceTests {
         contactResponseDto.setFirstName("Test");
         contactResponseDto.setLastName("Contact");
 
-        contactRequestDto = new ContactRequestDto();
-        contactRequestDto.setFirstName("Test");
-        contactRequestDto.setLastName("Contact");
+        contactRequestDto = new ContactRequestDto(
+                "Test", "Contact",null,null,null,null,null);
 
         contactType = new ContactType();
         contactType.setValue("Type");
@@ -85,7 +96,7 @@ public class ContactServiceTests {
     @Test
     public void ContactService_Create_ReturnsContactResponseDto(){
 
-        when(userRepository.findByEmail(anyString())).thenReturn(Optional.of(user));
+        when(userRepository.findByEmailIgnoreCase(anyString())).thenReturn(Optional.of(user));
         when(contactMapper.requestToEntity(any(ContactRequestDto.class))).thenReturn(contact);
         when(contactMapper.entityToResponse(contact)).thenReturn(contactResponseDto);
         when(contactRepository.save(contact)).thenReturn(contact);
@@ -97,7 +108,7 @@ public class ContactServiceTests {
         Assertions.assertThat(expectedDto.getFirstName()).isEqualTo(contact.getFirstName());
 
 
-        verify(userRepository, times(1)).findByEmail(anyString());
+        verify(userRepository, times(1)).findByEmailIgnoreCase(anyString());
         verifyNoMoreInteractions(userRepository);
 
         verify(contactMapper, times(1)).requestToEntity(any(ContactRequestDto.class));
@@ -109,18 +120,60 @@ public class ContactServiceTests {
 
         contactRequestDto.setType("Type");
 
-        when(userRepository.findByEmail(anyString())).thenReturn(Optional.of(user));
+        when(userRepository.findByEmailIgnoreCase(anyString())).thenReturn(Optional.of(user));
         when(contactMapper.requestToEntity(any(ContactRequestDto.class))).thenReturn(contact);
         when(contactMapper.entityToResponse(contact)).thenReturn(contactResponseDto);
         when(contactRepository.save(contact)).thenReturn(contact);
-        when(contactTypeRepository.findByValue(anyString())).thenReturn(Optional.of(contactType));
+        when(contactTypeRepository.findByValueIgnoreCase(anyString())).thenReturn(Optional.of(contactType));
 
         ContactResponseDto expectedDto = contactService.create("email", contactRequestDto);
 
         Assertions.assertThat(expectedDto).isNotNull();
         Assertions.assertThat(contact.getContactType().getValue()).isEqualTo(contactRequestDto.getType());
 
-        verify(contactTypeRepository, times(1)).findByValue(anyString());
+        verify(contactTypeRepository, times(1)).findByValueIgnoreCase(anyString());
+    }
+
+    @Test
+    public void ContactService_UploadContactsFromCSV_ReturnsWithSuccessMsg()
+            throws DataFormatException, ParseException, IOException {
+
+
+
+        when(csvMapper.CVSToContactRequestDto(any(MultipartFile.class))).
+                thenReturn(Collections.singletonList(contactRequestDto));
+        when(contactTypeRepository.findAll()).thenReturn(Collections.singletonList(contactType));
+
+        when(userRepository.findByEmailIgnoreCase(anyString())).thenReturn(Optional.of(user));
+        when(validator.validate(contactRequestDto)).thenReturn(new HashSet<ConstraintViolation<ContactRequestDto>>());
+
+        when(contactMapper.requestToEntity(any(ContactRequestDto.class))).thenReturn(contact);
+        when(contactRepository.save(contact)).thenReturn(contact);
+        when(contactTypeRepository.findByValueIgnoreCase(contactRequestDto.getType())).thenReturn(Optional.of(contactType));
+
+        ErrorDetails expectedError = contactService
+                .uploadContactsFromCSV("email", new MockMultipartFile("test",new byte[10]));
+
+        Assertions.assertThat(expectedError.getMessage()).isEqualTo("Success");
+    }
+
+    @Test
+    public void ContactService_UploadContactsFromCSV_ReturnsWithUploadedMsg()
+            throws DataFormatException, ParseException, IOException {
+
+        contactRequestDto.setType("invalid");
+
+        when(csvMapper.CVSToContactRequestDto(any(MultipartFile.class))).
+                thenReturn(Collections.singletonList(contactRequestDto));
+        when(contactTypeRepository.findAll()).thenReturn(Collections.singletonList(contactType));
+
+        when(userRepository.findByEmailIgnoreCase(anyString())).thenReturn(Optional.of(user));
+        when(validator.validate(contactRequestDto)).thenReturn(new HashSet<ConstraintViolation<ContactRequestDto>>());
+
+        ErrorDetails expectedError = contactService
+                .uploadContactsFromCSV("email", new MockMultipartFile("test",new byte[10]));
+
+        Assertions.assertThat(expectedError.getMessage()).contains("Uploaded ");
     }
 
     @Test
@@ -128,9 +181,9 @@ public class ContactServiceTests {
 
         contactRequestDto.setType("Type");
 
-        when(userRepository.findByEmail(anyString())).thenReturn(Optional.of(user));
+
         when(contactMapper.requestToEntity(any(ContactRequestDto.class))).thenReturn(contact);
-        when(contactTypeRepository.findByValue(anyString())).thenReturn(Optional.empty());
+        when(contactTypeRepository.findByValueIgnoreCase(anyString())).thenReturn(Optional.empty());
 
         Exception exception = org.junit.jupiter.api.Assertions.assertThrows(
                 EntityNotFoundException.class, () -> contactService.create("email", contactRequestDto));
@@ -145,7 +198,7 @@ public class ContactServiceTests {
 
         contact.setUser(user);
 
-        when(userRepository.findByEmail(anyString())).thenReturn(Optional.of(user));
+        when(userRepository.findByEmailIgnoreCase(anyString())).thenReturn(Optional.of(user));
         when(contactRepository.findByGuid(any(UUID.class))).thenReturn(Optional.of(contact));
         when(contactMapper.updateEntityFromRequest(contact,contactRequestDto)).thenReturn(contact);
         when(contactRepository.save(contact)).thenReturn(contact);
@@ -163,7 +216,7 @@ public class ContactServiceTests {
 
         contact.setUser(user2);
 
-        when(userRepository.findByEmail(anyString())).thenReturn(Optional.of(user));
+        when(userRepository.findByEmailIgnoreCase(anyString())).thenReturn(Optional.of(user));
         when(contactRepository.findByGuid(any(UUID.class))).thenReturn(Optional.of(contact));
 
 
@@ -184,9 +237,9 @@ public class ContactServiceTests {
         contact.setUser(user);
         contactRequestDto.setType(contactType.getValue());
 
-        when(userRepository.findByEmail(anyString())).thenReturn(Optional.of(user));
+        when(userRepository.findByEmailIgnoreCase(anyString())).thenReturn(Optional.of(user));
         when(contactRepository.findByGuid(any(UUID.class))).thenReturn(Optional.of(contact));
-        when(contactTypeRepository.findByValue(contactRequestDto.getType())).thenReturn(Optional.empty());
+        when(contactTypeRepository.findByValueIgnoreCase(contactRequestDto.getType())).thenReturn(Optional.empty());
 
 
         Exception exception = org.junit.jupiter.api.Assertions.assertThrows(
@@ -203,7 +256,7 @@ public class ContactServiceTests {
 
         contact.setUser(user);
 
-        when(userRepository.findByEmail(anyString())).thenReturn(Optional.of(user));
+        when(userRepository.findByEmailIgnoreCase(anyString())).thenReturn(Optional.of(user));
         when(contactRepository.findByGuid(any(UUID.class))).thenReturn(Optional.of(contact));
         when(contactMapper.entityToResponse(contact)).thenReturn(contactResponseDto);
 
@@ -219,7 +272,7 @@ public class ContactServiceTests {
         user.setRole(UserRole.ADMIN);
         contact.setUser(user2);
 
-        when(userRepository.findByEmail(anyString())).thenReturn(Optional.of(user));
+        when(userRepository.findByEmailIgnoreCase(anyString())).thenReturn(Optional.of(user));
         when(contactRepository.findByGuid(any(UUID.class))).thenReturn(Optional.of(contact));
         when(contactMapper.entityToResponse(contact)).thenReturn(contactResponseDto);
 
@@ -235,7 +288,7 @@ public class ContactServiceTests {
         user.setRole(UserRole.USER);
         contact.setUser(user2);
 
-        when(userRepository.findByEmail(anyString())).thenReturn(Optional.of(user));
+        when(userRepository.findByEmailIgnoreCase(anyString())).thenReturn(Optional.of(user));
         when(contactRepository.findByGuid(any(UUID.class))).thenReturn(Optional.of(contact));
 
 
@@ -253,7 +306,7 @@ public class ContactServiceTests {
 
         contact.setUser(user);
 
-        when(userRepository.findByEmail(anyString())).thenReturn(Optional.of(user));
+        when(userRepository.findByEmailIgnoreCase(anyString())).thenReturn(Optional.of(user));
         when(contactRepository.findByGuid(any(UUID.class))).thenReturn(Optional.of(contact));
 
         assertAll(() -> contactService.delete("email",UUID.randomUUID()));
@@ -265,7 +318,7 @@ public class ContactServiceTests {
         contact.setUser(user2);
 
 
-        when(userRepository.findByEmail(anyString())).thenReturn(Optional.of(user));
+        when(userRepository.findByEmailIgnoreCase(anyString())).thenReturn(Optional.of(user));
         when(contactRepository.findByGuid(any(UUID.class))).thenReturn(Optional.of(contact));
 
         Exception exception = org.junit.jupiter.api.Assertions.assertThrows(
@@ -311,7 +364,7 @@ public class ContactServiceTests {
     @Test
     public void ContactService_GetAllByUser_ReturnsFilteredPage() {
 
-        when(userRepository.findByEmail(anyString())).thenReturn(Optional.of(user));
+        when(userRepository.findByEmailIgnoreCase(anyString())).thenReturn(Optional.of(user));
         when(contactRepository.searchContactsByUser(anyInt(),any(String.class),any(String.class),any(Pageable.class)))
                 .thenReturn(new PageImpl<Contact>(Arrays.asList(contact)));
         when(contactMapper.entityToResponse(contact)).thenReturn(contactResponseDto);
@@ -330,7 +383,7 @@ public class ContactServiceTests {
     @Test
     public void ContactService_GetAllByUser_ReturnsUnfilteredPage() {
 
-        when(userRepository.findByEmail(anyString())).thenReturn(Optional.of(user));
+        when(userRepository.findByEmailIgnoreCase(anyString())).thenReturn(Optional.of(user));
         when(contactRepository.findByUser(user, PageRequest.of(0,10)))
                 .thenReturn(new PageImpl<Contact>(Arrays.asList(contact)));
         when(contactMapper.entityToResponse(contact)).thenReturn(contactResponseDto);
