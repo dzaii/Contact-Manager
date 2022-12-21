@@ -1,6 +1,7 @@
 package com.ingsoftware.contactmanager.controllers;
 
 import com.ingsoftware.contactmanager.dtos.UserRequestDto;
+import com.ingsoftware.contactmanager.dtos.UserRequestWithRoleDto;
 import com.ingsoftware.contactmanager.dtos.UserResponseDto;
 import com.ingsoftware.contactmanager.services.UserService;
 import com.ingsoftware.contactmanager.swagger.ApiPageable;
@@ -9,6 +10,7 @@ import org.springframework.dao.DuplicateKeyException;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.CurrentSecurityContext;
 import org.springframework.web.bind.annotation.*;
 import springfox.documentation.annotations.ApiIgnore;
 
@@ -31,8 +33,8 @@ public class UserController {
     }
 
     @PostMapping()
-    public ResponseEntity<UserResponseDto> createUser(@RequestBody @Valid UserRequestDto userRequestDto) {
-        return ResponseEntity.status(HttpStatus.OK).body(userService.create(userRequestDto));
+    public ResponseEntity<UserResponseDto> createUser(@RequestBody @Valid UserRequestWithRoleDto userRequestWithRoleDto) {
+        return ResponseEntity.status(HttpStatus.OK).body(userService.create(userRequestWithRoleDto));
     }
 
     @DeleteMapping("/{guid}")
@@ -49,9 +51,32 @@ public class UserController {
     }
 
     @PutMapping("/{guid}")
-    public ResponseEntity<UserResponseDto> editUser(@RequestBody @Valid UserRequestDto userRequestDto,
+    public ResponseEntity<UserResponseDto> editUser(@RequestBody @Valid UserRequestWithRoleDto userRequestWithRoleDto,
                                                     @PathVariable("guid") UUID guid)
             throws EntityNotFoundException, DuplicateKeyException {
-        return ResponseEntity.status(HttpStatus.OK).body(userService.edit(userRequestDto, guid));
+        return ResponseEntity.status(HttpStatus.OK).body(userService.edit(userRequestWithRoleDto, guid));
     }
+
+    @GetMapping("/current")
+    public ResponseEntity<UserResponseDto> getCurrent(
+            @ApiIgnore @CurrentSecurityContext(expression="authentication.name") String email)
+            throws EntityNotFoundException {
+        return ResponseEntity.status(HttpStatus.OK).body(userService.getCurrent(email));
+    }
+
+    @PutMapping("/current")
+    public ResponseEntity<UserResponseDto> editCurrent(
+            @ApiIgnore @CurrentSecurityContext(expression="authentication.name") String email,
+            @RequestBody @Valid UserRequestDto userRequestDto) {
+        return ResponseEntity.status(HttpStatus.OK).body(userService.editCurrent(userRequestDto,email));
+    }
+
+    @DeleteMapping("/current")
+    public ResponseEntity<UserResponseDto> deleteCurrent(
+            @ApiIgnore @CurrentSecurityContext(expression="authentication.name") String email) {
+        userService.deleteCurrent(email);
+        return new ResponseEntity<>(HttpStatus.OK);
+    }
+
+
 }

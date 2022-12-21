@@ -11,6 +11,7 @@ import java.util.UUID;
 public interface UserRepository extends JpaRepository<User, Integer> {
 
     boolean existsUserByEmailIgnoreCase(String email);
+    boolean existsUserByPhoneNumber(String phoneNumber);
 
     Long deleteByGuid(UUID guid);
 

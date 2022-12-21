@@ -65,4 +65,12 @@ public class User {
     @Generated(GenerationTime.INSERT)
     @Column(name = "guid")
     private UUID guid;
+
+    @Column(name = "phone_number")
+    @Pattern(regexp = "^\\+\\d{8,18}$",
+            message = "Invalid number. Please make sure that you are using E.164 format.")
+    private String phoneNumber;
+
+    @Column(name = "enabled")
+    private boolean enabled;
 }
