@@ -37,7 +37,7 @@ public class UserService {
     @Transactional(rollbackFor = Exception.class)
     public UserResponseDto create(UserRequestDto userRequestDto) {
 
-        if (userRepository.existsUserByEmail(userRequestDto.getEmail())) {
+        if (userRepository.existsUserByEmailIgnoreCase(userRequestDto.getEmail())) {
             throw new DuplicateKeyException("Email already exists.");
         }
 
@@ -62,7 +62,7 @@ public class UserService {
         User user = findByGuid(guid);
 
         if (user.getEmail().equals(userRequestDto.getEmail())
-                || !userRepository.existsUserByEmail(userRequestDto.getEmail())) {
+                || !userRepository.existsUserByEmailIgnoreCase(userRequestDto.getEmail())) {
 
             return userMapper.entityToResponseDto(userRepository.save(
                     userMapper.updateEntityFromRequest(user, userRequestDto)));
