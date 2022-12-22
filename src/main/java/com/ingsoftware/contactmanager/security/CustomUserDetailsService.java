@@ -33,12 +33,13 @@ public class CustomUserDetailsService implements UserDetailsService {
                         user.getEmail(),
                         user.getPassword(),
                         mapRolesToAuthorities(user.getRole(), user.isEnabled()));
+
     }
 
     private List<GrantedAuthority> mapRolesToAuthorities(UserRole role, boolean isEnabled) {
         if(isEnabled) {
             return Collections.singletonList(new SimpleGrantedAuthority(role.name()));
         }
-        return Collections.singletonList(new SimpleGrantedAuthority("NONE"));
+        return Collections.singletonList(new SimpleGrantedAuthority("UNVERIFIED"));
     }
 }

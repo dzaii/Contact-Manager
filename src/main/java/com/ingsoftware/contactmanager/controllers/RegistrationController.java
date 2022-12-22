@@ -21,10 +21,4 @@ public class RegistrationController {
     public ResponseEntity<?> register(@RequestBody @Valid UserRequestDto userRequestDto){
         return ResponseEntity.status(HttpStatus.OK).body(registrationService.register(userRequestDto));
     }
-
-    @PostMapping("/{guid}")
-    public ResponseEntity<?> verify(@RequestParam String code, @PathVariable("guid") UUID guid){
-        registrationService.verify(code,guid);
-        return new ResponseEntity<>(HttpStatus.OK);
-    }
 }

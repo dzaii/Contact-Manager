@@ -6,12 +6,12 @@ import com.ingsoftware.contactmanager.mappers.UserMapper;
 import com.ingsoftware.contactmanager.models.User;
 import com.ingsoftware.contactmanager.models.enums.UserRole;
 import com.ingsoftware.contactmanager.repositories.UserRepository;
-import com.twilio.Twilio;
 import com.twilio.rest.verify.v2.service.Verification;
 import com.twilio.rest.verify.v2.service.VerificationCheck;
 import lombok.AllArgsConstructor;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.EntityNotFoundException;
 import javax.validation.ValidationException;
@@ -29,8 +29,7 @@ public class RegistrationService {
     private UserMapper userMapper;
     private EmailService emailService;
 
-
-
+    @Transactional(rollbackFor = Exception.class)
     public Map<UserResponseDto,String> register(UserRequestDto userRequestDto) {
 
         if (userRepository.existsUserByEmailIgnoreCase(userRequestDto.getEmail())) {
@@ -43,17 +42,21 @@ public class RegistrationService {
         User user = userMapper.registerDtoToEntity(userRequestDto);
         sendCode(user);
         user.setRole(UserRole.USER);
+        userRepository.save(user);
 
         Map<UserResponseDto,String> response = new HashMap<>();
-        response.put(userMapper.entityToResponseDto(userRepository.save(user)), "Submit code on: /register/" + user.getGuid());
+        response.put(userMapper.entityToResponseDto(user), "Submit code on: /" + user.getGuid()+ "/verify");
         return response;
 
     }
 
+    @Transactional(rollbackFor = Exception.class)
     public void verify(String code, UUID guid){
         User user = userRepository.findByGuid(guid).orElseThrow(() -> new EntityNotFoundException("User not found."));
 
-        Twilio.init(System.getenv("TWILIO_ACCOUNT_SID"), System.getenv("TWILIO_AUTH_TOKEN"));
+        if(user.isEnabled()){
+            return;
+        }
         VerificationCheck verificationCheck = VerificationCheck.creator(
                         System.getenv("TWILIO_SERVICE_SID"))
                 .setTo(user.getPhoneNumber())
@@ -68,7 +71,6 @@ public class RegistrationService {
     }
 
     public void sendCode(User user){
-        Twilio.init(System.getenv("TWILIO_ACCOUNT_SID"), System.getenv("TWILIO_AUTH_TOKEN"));
         Verification verification = Verification.creator(
                         System.getenv("TWILIO_SERVICE_SID"),
                         user.getPhoneNumber(),
