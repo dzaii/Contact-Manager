@@ -30,7 +30,7 @@ public class RegistrationService {
     private EmailService emailService;
 
     @Transactional(rollbackFor = Exception.class)
-    public Map<UserResponseDto,String> register(UserRequestDto userRequestDto) {
+    public UserResponseDto register(UserRequestDto userRequestDto) {
 
         if (userRepository.existsUserByEmailIgnoreCase(userRequestDto.getEmail())) {
             throw new DuplicateKeyException("Email already exists.");
@@ -44,10 +44,7 @@ public class RegistrationService {
         user.setRole(UserRole.USER);
         userRepository.save(user);
 
-        Map<UserResponseDto,String> response = new HashMap<>();
-        response.put(userMapper.entityToResponseDto(user), "Submit code on: /" + user.getGuid()+ "/verify");
-        return response;
-
+        return userMapper.entityToResponseDto(user);
     }
 
     @Transactional(rollbackFor = Exception.class)

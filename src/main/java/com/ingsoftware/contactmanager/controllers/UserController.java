@@ -65,27 +65,6 @@ public class UserController {
         return ResponseEntity.status(HttpStatus.OK).body(userService.edit(email, userRequestWithRoleDto, guid));
     }
 
-//    @GetMapping("/current")
-//    public ResponseEntity<UserResponseDto> getCurrent(
-//            @ApiIgnore @CurrentSecurityContext(expression="authentication.name") String email)
-//            throws EntityNotFoundException {
-//        return ResponseEntity.status(HttpStatus.OK).body(userService.getCurrent(email));
-//    }
-//
-//    @PutMapping("/current")
-//    public ResponseEntity<UserResponseDto> editCurrent(
-//            @ApiIgnore @CurrentSecurityContext(expression="authentication.name") String email,
-//            @RequestBody @Valid UserRequestDto userRequestDto) {
-//        return ResponseEntity.status(HttpStatus.OK).body(userService.editCurrent(userRequestDto,email));
-//    }
-//
-//    @DeleteMapping("/current")
-//    public ResponseEntity<UserResponseDto> deleteCurrent(
-//            @ApiIgnore @CurrentSecurityContext(expression="authentication.name") String email) {
-//        userService.deleteCurrent(email);
-//        return new ResponseEntity<>(HttpStatus.OK);
-//    }
-
     @PostMapping("/{guid}/verify")
     public ResponseEntity<?> verify(@RequestParam String code, @PathVariable("guid") UUID guid){
         registrationService.verify(code,guid);
