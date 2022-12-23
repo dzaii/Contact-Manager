@@ -2,6 +2,7 @@ package com.ingsoftware.contactmanager.dtos;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.Email;
 import javax.validation.constraints.NotBlank;
@@ -10,8 +11,8 @@ import javax.validation.constraints.Size;
 
 @Data
 @AllArgsConstructor
+@NoArgsConstructor
 public class UserRequestDto {
-
     @Size(max = 30, message = "First name must not exceed 30 characters.")
     private String firstName;
 
@@ -31,9 +32,8 @@ public class UserRequestDto {
                     " one lower case letter, one number and one special character.")
     private String password;
 
-    @NotBlank(message = "User role cannot be blank.")
-    @Pattern(regexp = "ADMIN|USER",flags = Pattern.Flag.CASE_INSENSITIVE,
-            message = "Invalid user role.")
-    private String role;
-
+    @NotBlank(message = "Phone number cannot be blank.")
+    @Pattern(regexp = "^\\+\\d{8,18}$",
+            message = "Invalid number. Please make sure that you are using E.164 format.")
+    private String phoneNumber;
 }

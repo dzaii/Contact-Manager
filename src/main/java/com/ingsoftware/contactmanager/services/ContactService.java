@@ -15,6 +15,7 @@ import com.ingsoftware.contactmanager.repositories.ContactTypeRepository;
 import com.ingsoftware.contactmanager.repositories.UserRepository;
 import lombok.AllArgsConstructor;
 
+import lombok.extern.log4j.Log4j2;
 import org.apache.el.parser.ParseException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -36,6 +37,7 @@ import java.util.zip.DataFormatException;
 
 @Service
 @AllArgsConstructor
+@Log4j2
 public class ContactService {
 
     private ContactRepository contactRepository;
@@ -181,7 +183,7 @@ public class ContactService {
         }
 
         if(!violations.isEmpty()){
-            System.out.println("Invalid entry on line "+ line + " " + violations);
+            log.error("Error while parsing CSV on line "+ line + " " + violations);
             return false;
         }
         return true;

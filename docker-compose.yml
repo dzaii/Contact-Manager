@@ -12,6 +12,13 @@ services:
          condition: service_healthy
     environment:
       - SPRING_DATASOURCE_URL=jdbc:postgresql://db:5432/contact_manager_db
+      - SPRING_DATASOURCE.USERNAME=local_rw
+      - SPRING_DATASOURCE.PASSWORD=localrw
+      - TWILIO_ACCOUNT_SID=
+      - TWILIO_AUTH_TOKEN=
+      - TWILIO_SERVICE_SID=
+      - MY_EMAIL=
+      - MY_PASSWORD=
 
   db:
     image: 'postgres:14.6-alpine'
