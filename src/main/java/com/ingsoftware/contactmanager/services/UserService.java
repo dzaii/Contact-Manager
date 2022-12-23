@@ -11,11 +11,11 @@ import lombok.AllArgsConstructor;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.security.access.AuthorizationServiceException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.EntityNotFoundException;
+import java.nio.file.AccessDeniedException;
 import java.util.UUID;
 
 @Service
@@ -33,14 +33,14 @@ public class UserService {
     }
 
     @Transactional(readOnly = true)
-    public UserResponseDto get(String email, UUID guid) throws EntityNotFoundException {
+    public UserResponseDto get(String email, UUID guid) throws EntityNotFoundException, AccessDeniedException {
 
         User currentUser = userRepository.findByEmailIgnoreCase(email).get();
 
         if(currentUser.getGuid().equals(guid) || currentUser.getRole().equals(UserRole.ADMIN)) {
             return userMapper.entityToResponseDto(findByGuid(guid));
         }
-        throw new AuthorizationServiceException("Not authorized.");
+        throw new AccessDeniedException("Not authorized.");
     }
 
     @Transactional(rollbackFor = Exception.class)
@@ -60,7 +60,7 @@ public class UserService {
     }
 
     @Transactional(rollbackFor = Exception.class)
-    public void delete(String email, UUID guid) throws EntityNotFoundException {
+    public void delete(String email, UUID guid) throws EntityNotFoundException, AccessDeniedException {
 
         User currentUser = userRepository.findByEmailIgnoreCase(email).get();
 
@@ -68,12 +68,12 @@ public class UserService {
                User targetUser = findByGuid(guid);
                userRepository.delete(targetUser);
             }
-        throw new AuthorizationServiceException("Not authorized.");
+        throw new AccessDeniedException("Not authorized.");
     }
 
     @Transactional(rollbackFor = Exception.class)
     public UserResponseDto edit(String email, UserRequestWithRoleDto userRequestWithRoleDto, UUID guid)
-            throws EntityNotFoundException, DuplicateKeyException {
+            throws EntityNotFoundException, DuplicateKeyException, AccessDeniedException {
 
         User currentUser = userRepository.findByEmailIgnoreCase(email).get();
         User targetUser = findByGuid(guid);
@@ -98,9 +98,11 @@ public class UserService {
     }
 
 
-    private void validateEditRequest(User currentUser, User targetUser, UserRequestWithRoleDto userRequestWithRoleDto ){
+    private void validateEditRequest(User currentUser, User targetUser, UserRequestWithRoleDto userRequestWithRoleDto )
+            throws AccessDeniedException {
+
         if(!currentUser.getGuid().equals(targetUser.getGuid()) && !currentUser.getRole().equals(UserRole.ADMIN)){
-            throw new AuthorizationServiceException("Not authorized to change other users.");
+            throw new AccessDeniedException("Not authorized to change other users.");
         }
 
         if (!targetUser.getEmail().equals(userRequestWithRoleDto.getEmail())
@@ -115,7 +117,7 @@ public class UserService {
 
         if(!userRequestWithRoleDto.getRole().equalsIgnoreCase(UserRole.USER.name())
                 && !currentUser.getRole().equals(UserRole.ADMIN)){
-            throw new AuthorizationServiceException("Not authorized to change user roles.");
+            throw new AccessDeniedException("Not authorized to change user roles.");
         }
     }
 

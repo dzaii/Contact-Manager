@@ -48,18 +48,25 @@ public class RegistrationService {
     }
 
     @Transactional(rollbackFor = Exception.class)
-    public void verify(String code, UUID guid){
+    public void verify(String code, UUID guid) throws Exception {
         User user = userRepository.findByGuid(guid).orElseThrow(() -> new EntityNotFoundException("User not found."));
 
-        if(user.isEnabled()){
+        if (user.isEnabled()) {
             return;
         }
-        VerificationCheck verificationCheck = VerificationCheck.creator(
-                        System.getenv("TWILIO_SERVICE_SID"))
-                .setTo(user.getPhoneNumber())
-                .setCode(code)
-                .create();
-        if(!verificationCheck.getStatus().equals("approved")){
+
+        VerificationCheck verificationCheck;
+        try {
+            verificationCheck = VerificationCheck.creator(
+                            System.getenv("TWILIO_SERVICE_SID"))
+                    .setTo(user.getPhoneNumber())
+                    .setCode(code)
+                    .create();
+        } catch (Exception e) {
+            throw new Exception("Unable to verify.");
+        }
+
+        if (!verificationCheck.getStatus().equals("approved")) {
             throw new ValidationException("Incorrect code.");
         }
         user.setEnabled(true);
