@@ -16,7 +16,7 @@ import static java.lang.annotation.ElementType.TYPE;
 @Target(TYPE)
 public @interface Contact {
 
-    String message() default "{error.contact}";
+    String message() default "At least one primary attribute must be present.";
     Class<?>[] groups() default {};
     Class<? extends Payload>[] payload() default {};
 }

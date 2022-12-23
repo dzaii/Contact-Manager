@@ -1,19 +1,21 @@
 package com.ingsoftware.contactmanager.exeptionHandlers;
 
+import lombok.extern.log4j.Log4j2;
 import org.springframework.aop.interceptor.AsyncUncaughtExceptionHandler;
 
 import java.lang.reflect.Method;
 
+@Log4j2
 public class CustomAsyncExceptionHandler implements AsyncUncaughtExceptionHandler {
 
     @Override
     public void handleUncaughtException(
             Throwable throwable, Method method, Object... obj) {
 
-        System.out.println("Exception message - " + throwable.getMessage());
-        System.out.println("Method name - " + method.getName());
+        log.error("Exception message - " + throwable.getMessage());
+        log.error("Method name - " + method.getName());
         for (Object param : obj) {
-            System.out.println("Parameter value - " + param);
+            log.error("Parameter value - " + param);
         }
     }
 }

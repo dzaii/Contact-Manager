@@ -16,6 +16,7 @@ import springfox.documentation.annotations.ApiIgnore;
 
 import javax.persistence.EntityNotFoundException;
 import javax.validation.Valid;
+import java.nio.file.AccessDeniedException;
 import java.util.UUID;
 
 @RestController
@@ -41,7 +42,7 @@ public class UserController {
     @DeleteMapping("/{guid}")
     public ResponseEntity<?> deleteUser(
             @ApiIgnore @CurrentSecurityContext(expression="authentication.name") String email,
-            @PathVariable("guid") UUID guid) throws EntityNotFoundException {
+            @PathVariable("guid") UUID guid) throws EntityNotFoundException, AccessDeniedException {
 
         userService.delete(email, guid);
         return new ResponseEntity<>(HttpStatus.OK);
@@ -50,7 +51,7 @@ public class UserController {
     @GetMapping("/{guid}")
     public ResponseEntity<UserResponseDto> getUser(
             @ApiIgnore @CurrentSecurityContext(expression="authentication.name") String email,
-            @PathVariable("guid") UUID guid) throws EntityNotFoundException {
+            @PathVariable("guid") UUID guid) throws EntityNotFoundException, AccessDeniedException {
 
         return ResponseEntity.status(HttpStatus.OK).body(userService.get(email,guid));
     }
@@ -60,13 +61,13 @@ public class UserController {
             @ApiIgnore @CurrentSecurityContext(expression="authentication.name") String email,
             @RequestBody @Valid UserRequestWithRoleDto userRequestWithRoleDto,
             @PathVariable("guid") UUID guid)
-            throws EntityNotFoundException, DuplicateKeyException {
+            throws EntityNotFoundException, DuplicateKeyException, AccessDeniedException {
 
         return ResponseEntity.status(HttpStatus.OK).body(userService.edit(email, userRequestWithRoleDto, guid));
     }
 
     @PostMapping("/{guid}/verify")
-    public ResponseEntity<?> verify(@RequestParam String code, @PathVariable("guid") UUID guid){
+    public ResponseEntity<?> verify(@RequestParam String code, @PathVariable("guid") UUID guid) throws Exception {
         registrationService.verify(code,guid);
         return new ResponseEntity<>(HttpStatus.OK);
     }
