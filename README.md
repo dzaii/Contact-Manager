@@ -214,7 +214,7 @@ Project Link: [https://github.com/dzaii/Contact-Manager](https://github.com/dzai
 [license-shield]: https://img.shields.io/github/license/dzaii/Contact-Manager.svg?style=for-the-badge
 [license-url]: https://github.com/dzaii/Contact-Manager/blob/master/LICENSE.txt
 [linkedin-shield]: https://img.shields.io/badge/-LinkedIn-black.svg?style=for-the-badge&logo=linkedin&colorB=555
-[linkedin-url]: https://www.linkedin.com/in/ivan-bojinovic-b7090624b
+[linkedin-url]: https://www.linkedin.com/in/ivan-bojinovic
 [Java-url]: https://www.java.com
 [Java.img]: https://img.shields.io/badge/java-%23ED8B00.svg?style=for-the-badge&logo=java&logoColor=white
 [Spring-boot-url]: https://spring.io/projects/spring-boot
